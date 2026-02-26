@@ -1,25 +1,23 @@
 package com.alilopez.kt_demohilt.features.user.domain.usescase
 
-
 import com.alilopez.kt_demohilt.features.user.domain.entities.User
 import com.alilopez.kt_demohilt.features.user.domain.repositories.UserRepository
+import javax.inject.Inject
 
-class UserRegisterUseCase(
-    private val userRepository: UserRepository
+class UserRegisterUseCase @Inject constructor(
+    private val repository: UserRepository
 ) {
     suspend operator fun invoke(
-        email: String,
         name: String,
-        lastname: String,
-        password: String
+        password: String,
+        role: String = "customer",
+        address: String? = null
     ): User {
-        return userRepository.register(
+        return repository.register(
             name = name,
-            email = email,
             password = password,
-            lastname = lastname,
-            role = "user",
-            address = null
+            role = role,
+            address = address
         )
     }
 }

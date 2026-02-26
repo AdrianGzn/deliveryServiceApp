@@ -1,6 +1,5 @@
 package com.alilopez.kt_demohilt.features.user.presentation.viewmodels
 
-
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.alilopez.kt_demohilt.features.user.domain.usescase.UserRegisterUseCase
@@ -21,32 +20,32 @@ class RegisterViewModel @Inject constructor(
     private val _uiState = MutableStateFlow(RegisterUIState())
     val uiState: StateFlow<RegisterUIState> = _uiState.asStateFlow()
 
-    private val _email = MutableStateFlow("")
-    val email: StateFlow<String> = _email.asStateFlow()
-
     private val _name = MutableStateFlow("")
     val name: StateFlow<String> = _name.asStateFlow()
-
-    private val _lastname = MutableStateFlow("")
-    val lastname: StateFlow<String> = _lastname.asStateFlow()
 
     private val _password = MutableStateFlow("")
     val password: StateFlow<String> = _password.asStateFlow()
 
-    fun onEmailChange(email: String) {
-        _email.value = email
-    }
+    private val _address = MutableStateFlow("")
+    val address: StateFlow<String> = _address.asStateFlow()
+
+    private val _selectedRole = MutableStateFlow("customer")
+    val selectedRole: StateFlow<String> = _selectedRole.asStateFlow()
 
     fun onNameChange(name: String) {
         _name.value = name
     }
 
-    fun onLastnameChange(lastname: String) {
-        _lastname.value = lastname
-    }
-
     fun onPasswordChange(password: String) {
         _password.value = password
+    }
+
+    fun onAddressChange(address: String) {
+        _address.value = address
+    }
+
+    fun onRoleChange(role: String) {
+        _selectedRole.value = role
     }
 
     fun onRegisterClick() {
@@ -55,10 +54,10 @@ class RegisterViewModel @Inject constructor(
 
             try {
                 val user = userRegisterUseCase(
-                    email = _email.value,
                     name = _name.value,
-                    lastname = _lastname.value,
-                    password = _password.value
+                    password = _password.value,
+                    role = _selectedRole.value,
+                    address = if (_address.value.isNotBlank()) _address.value else null
                 )
 
                 _uiState.update { it.copy(isRegistered = true, isLoading = false) }
