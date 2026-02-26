@@ -1,16 +1,25 @@
 package com.alilopez.kt_demohilt.features.user.presentation.screens
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
-import androidx.compose.material3.Button
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.Text
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.*
+import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.alilopez.kt_demohilt.core.components.Input
 import com.alilopez.kt_demohilt.features.user.presentation.viewmodels.LoginViewModel
 
@@ -22,65 +31,179 @@ fun LoginScreen(
     onNavigateToRegister: () -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    val isDarkTheme = isSystemInDarkTheme()
+
+    val backgroundColor = if (isDarkTheme) Color(0xFF121212) else Color(0xFFF5F5F5)
+    val cardColor = if (isDarkTheme) Color(0xFF1E1E1E) else Color.White
+    val textColor = if (isDarkTheme) Color.White else Color(0xFF212121)
+    val secondaryTextColor = if (isDarkTheme) Color(0xFFB0B0B0) else Color(0xFF757575)
 
     LaunchedEffect(key1 = uiState.user) {
         uiState.user?.let {
             when (it.role) {
                 "customer" -> onNavigateToCustomer()
                 "delivery" -> onNavigateToDelivery()
-                else -> { /* No hacer nada */ }
             }
         }
     }
 
-    Column(
+    Box(
         modifier = Modifier
             .fillMaxSize()
-            .padding(16.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
+            .background(backgroundColor)
     ) {
-        Input(
-            value = uiState.email,
-            onValueChange = { viewModel.onEmailChange(it) },
-            placeholder = "Email",
-            keyboardType = KeyboardType.Email
-        )
-
-        Spacer(modifier = Modifier.height(8.dp))
-
-        Input(
-            value = uiState.password,
-            onValueChange = { viewModel.onPasswordChange(it) },
-            placeholder = "Contraseña",
-            isPassword = true,
-            keyboardType = KeyboardType.Password
-        )
-
-        Spacer(modifier = Modifier.height(8.dp))
-
-        if (uiState.error != null) {
-            Text(text = uiState.error!!, color = Color.Red)
-            Spacer(modifier = Modifier.height(8.dp))
-        }
-
-        Button(
-            onClick = { viewModel.login() },
-            enabled = !uiState.isLoading &&
-                    uiState.email.isNotBlank() &&
-                    uiState.password.isNotBlank()
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState())
+                .padding(24.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            if (uiState.isLoading) {
-                CircularProgressIndicator(modifier = Modifier.size(24.dp))
-            } else {
-                Text(text = "Iniciar sesión")
+            // Espaciado superior
+            Spacer(modifier = Modifier.height(48.dp))
+
+            // Logo
+            Box(
+                modifier = Modifier
+                    .size(80.dp)
+                    .clip(RoundedCornerShape(20.dp))
+                    .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = Icons.Outlined.Lock,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.size(40.dp)
+                )
             }
-        }
 
-        Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(24.dp))
 
-        Button(onClick = onNavigateToRegister) {
-            Text(text = "¿No tienes una cuenta? Regístrate")
+            // Título
+            Text(
+                text = "Bienvenido",
+                fontSize = 28.sp,
+                fontWeight = FontWeight.Bold,
+                color = textColor
+            )
+
+            Text(
+                text = "Inicia sesión para continuar",
+                fontSize = 14.sp,
+                color = secondaryTextColor,
+                modifier = Modifier.padding(top = 4.dp)
+            )
+
+            Spacer(modifier = Modifier.height(32.dp))
+
+            // Formulario de login
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(16.dp),
+                colors = CardDefaults.cardColors(containerColor = cardColor),
+                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(24.dp),
+                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
+                    // Email
+                    Input(
+                        value = uiState.email,
+                        onValueChange = { viewModel.onEmailChange(it) },
+                        placeholder = "Correo electrónico",
+                        leadingIcon = Icons.Outlined.Email,
+                        keyboardType = KeyboardType.Email
+                    )
+
+                    // Contraseña
+                    Input(
+                        value = uiState.password,
+                        onValueChange = { viewModel.onPasswordChange(it) },
+                        placeholder = "Contraseña",
+                        leadingIcon = Icons.Outlined.Lock,
+                        isPassword = true,
+                        keyboardType = KeyboardType.Password
+                    )
+
+                    // Mensaje de error
+                    if (uiState.error != null) {
+                        Text(
+                            text = uiState.error!!,
+                            color = MaterialTheme.colorScheme.error,
+                            fontSize = 14.sp,
+                            modifier = Modifier.padding(top = 4.dp)
+                        )
+                    }
+
+                    // Botón de login
+                    Button(
+                        onClick = { viewModel.login() },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(52.dp),
+                        enabled = !uiState.isLoading &&
+                                uiState.email.isNotBlank() &&
+                                uiState.password.isNotBlank(),
+                        shape = RoundedCornerShape(12.dp)
+                    ) {
+                        if (uiState.isLoading) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(24.dp),
+                                color = Color.White,
+                                strokeWidth = 2.dp
+                            )
+                        } else {
+                            Text(
+                                text = "Iniciar sesión",
+                                fontSize = 16.sp,
+                                fontWeight = FontWeight.SemiBold
+                            )
+                        }
+                    }
+
+                    // Olvidé mi contraseña
+                    TextButton(
+                        onClick = { /* TODO: Implementar recuperación */ },
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text(
+                            text = "¿Olvidaste tu contraseña?",
+                            color = MaterialTheme.colorScheme.primary,
+                            fontSize = 14.sp
+                        )
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            // Registro
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.Center,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "¿No tienes cuenta? ",
+                    color = secondaryTextColor,
+                    fontSize = 14.sp
+                )
+                TextButton(
+                    onClick = onNavigateToRegister,
+                    contentPadding = PaddingValues(0.dp)
+                ) {
+                    Text(
+                        text = "Regístrate",
+                        color = MaterialTheme.colorScheme.primary,
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                }
+            }
         }
     }
 }
