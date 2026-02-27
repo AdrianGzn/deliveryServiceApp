@@ -11,8 +11,6 @@ import androidx.navigation.compose.composable
 import com.alilopez.kt_demohilt.core.navigation.routes.Screen
 import com.alilopez.kt_demohilt.features.auth.presentation.AuthViewModel
 import com.alilopez.kt_demohilt.features.feature01.presentation.HomeScreen
-import com.alilopez.kt_demohilt.features.jsonplaceholder.presentation.ui.PostsScreen
-import com.alilopez.kt_demohilt.features.pets.presentation.ui.PetsScreen
 import com.alilopez.kt_demohilt.features.user.presentation.screens.LoginScreen
 import com.alilopez.kt_demohilt.features.user.presentation.screens.RegisterScreen
 import com.alilopez.kt_demohilt.features.user.presentation.viewmodels.LoginViewModel
@@ -101,12 +99,5 @@ fun AppNavGraph(
             )
         }
 
-        composable(route = Screen.Posts.route) {
-            PostsScreen()
-        }
-
-        composable(route = Screen.Pets.route) {
-            PetsScreen(navController = navController)
-        }
     }
 }

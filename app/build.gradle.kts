@@ -1,22 +1,21 @@
-
 plugins {
-    alias(libs.plugins.android.application)
-    alias(libs.plugins.kotlin.compose)
-    alias(libs.plugins.secrets.gradle)
+    alias(libs.plugins.androidApplication)
+    alias(libs.plugins.jetbrainsKotlinAndroid)
+    alias(libs.plugins.kotlinCompose)
+    alias(libs.plugins.secretsGradle)
     alias(libs.plugins.jetbrainsKotlinSerialization)
-    // Activa Hilt y KSP
-    alias(libs.plugins.devtools.ksp)
-    alias(libs.plugins.hilt.android)
+    alias(libs.plugins.devtoolsKsp)
+    alias(libs.plugins.hiltAndroid)
 }
 
 android {
     namespace = "com.alilopez.kt_demohilt"
-    compileSdk = 36
+    compileSdk = 35
 
     defaultConfig {
         applicationId = "com.alilopez.kt_demohilt"
         minSdk = 26
-        targetSdk = 36
+        targetSdk = 35
         versionCode = 1
         versionName = "1.0"
 
@@ -32,37 +31,35 @@ android {
             )
         }
     }
+
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_21
-        targetCompatibility = JavaVersion.VERSION_21
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
     }
 
     buildFeatures {
         compose = true
-        buildConfig = true  //Habilitar variables
-        resValues = true
-    }
-
-    ksp {
-        arg("hilt.disableModulesHaveInstallInCheck", "true")
+        buildConfig = true
     }
 
     flavorDimensions.add("environment")
     productFlavors {
         create("dev") {
             dimension = "environment"
-            buildConfigField("String", "BASE_URL_RICK", "\"https://rickandmortyapi.com/api/\"")
-            buildConfigField("String", "BASE_URL_JSON", "\"https://jsonplaceholder.typicode.com/\"")
+            buildConfigField("String", "BASE_URL", "\"http://10.0.2.2:8080/\"")
             resValue("string", "app_name", "Demo (DEV)")
         }
 
         create("prod") {
             dimension = "environment"
-            buildConfigField("String", "BASE_URL_RICK", "\"https://rickandmortyapi.com/api/\"")
-            buildConfigField("String", "BASE_URL_JSON", "\"https://jsonplaceholder.typicode.com/\"")
+            buildConfigField("String", "BASE_URL", "\"https://tu-api-produccion.com/\"")
             resValue("string", "app_name", "Demo")
         }
     }
+}
+
+ksp {
+    arg("hilt.disableModulesHaveInstallInCheck", "true")
 }
 
 secrets {
@@ -73,11 +70,15 @@ secrets {
 
 kotlin {
     compilerOptions {
-        jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_21)
+        jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17)
     }
 }
 
 dependencies {
+    implementation("com.squareup.okhttp3:okhttp-sse:4.12.0")
+    implementation("com.squareup.okhttp3:okhttp:4.12.0")
+    implementation("com.squareup.okhttp3:logging-interceptor:4.12.0")
+
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
@@ -86,18 +87,18 @@ dependencies {
     implementation(libs.androidx.compose.ui.graphics)
     implementation(libs.androidx.compose.ui.tooling.preview)
     implementation(libs.androidx.compose.material3)
+    implementation(libs.androidx.compose.ui.text.google.fonts)
+    implementation(libs.androidx.lifecycle.viewmodel.compose)
+    implementation(libs.androidx.navigation.compose)
+    implementation(libs.androidx.compose.material.icons.extended)
 
-    implementation(libs.androidx.compose.ui.text.google.fonts)      // G Fonts
-    implementation(libs.androidx.lifecycle.viewmodel.compose)       // viewModel()
-    implementation(libs.com.squareup.retrofit2.retrofit)            // Retrofit
-    implementation(libs.com.squareup.retrofit2.converter.json)      // JSON
-    implementation(libs.io.coil.kt.coil.compose)                    // Coil
-    implementation(libs.androidx.navigation.compose)                // Navigation
-    implementation(libs.androidx.compose.material.icons.extended)   // Icons extendend
-    implementation(libs.hilt.android)                               // Implementación de Hilt
-    implementation(libs.hilt.navigation.compose)                    // Integración con Jetpack Compose
-    ksp(libs.hilt.compiler)                                         // KSP
+    implementation(libs.com.squareup.retrofit2.retrofit)
+    implementation(libs.com.squareup.retrofit2.converter.json)
+    implementation(libs.io.coil.kt.coil.compose)
 
+    implementation(libs.hilt.android)
+    implementation(libs.hilt.navigation.compose)
+    ksp(libs.hilt.compiler)
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)

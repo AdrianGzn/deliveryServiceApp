@@ -1,9 +1,9 @@
-// Top-level build file where you can add configuration options common to all sub-projects/modules.
 plugins {
-    alias(libs.plugins.android.application) apply false
-    alias(libs.plugins.kotlin.compose) apply false
-    alias(libs.plugins.secrets.gradle) apply false                  // Secrets Gradle
-    alias(libs.plugins.jetbrainsKotlinSerialization) apply false    // Serialization
-    alias(libs.plugins.hilt.android) apply false                    // Hilt
-    alias(libs.plugins.devtools.ksp) apply false                    // KSP
+    alias(libs.plugins.androidApplication) apply false
+    alias(libs.plugins.jetbrainsKotlinAndroid) apply false
+    alias(libs.plugins.kotlinCompose) apply false
+    alias(libs.plugins.secretsGradle) apply false
+    alias(libs.plugins.jetbrainsKotlinSerialization) apply false
+    alias(libs.plugins.hiltAndroid) apply false
+    alias(libs.plugins.devtoolsKsp) apply false
 }
