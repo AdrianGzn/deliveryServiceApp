@@ -21,16 +21,17 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.alilopez.kt_demohilt.core.components.Input
+import com.alilopez.kt_demohilt.features.user.domain.entities.User
 import com.alilopez.kt_demohilt.features.user.presentation.viewmodels.LoginViewModel
 
 @Composable
 fun LoginScreen(
     viewModel: LoginViewModel = hiltViewModel(),
-    onNavigateToCustomer: () -> Unit,
-    onNavigateToDelivery: () -> Unit,
+    onNavigateToCustomer: (User) -> Unit,
+    onNavigateToDelivery: (User) -> Unit,
     onNavigateToRegister: () -> Unit
 ) {
-    val uiState by viewModel.uiState.collectAsState()
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val isDarkTheme = isSystemInDarkTheme()
 
     val backgroundColor = if (isDarkTheme) Color(0xFF121212) else Color(0xFFF5F5F5)
@@ -39,10 +40,10 @@ fun LoginScreen(
     val secondaryTextColor = if (isDarkTheme) Color(0xFFB0B0B0) else Color(0xFF757575)
 
     LaunchedEffect(key1 = uiState.user) {
-        uiState.user?.let {
-            when (it.role) {
-                "customer" -> onNavigateToCustomer()
-                "delivery" -> onNavigateToDelivery()
+        uiState.user?.let { user ->
+            when (user.role) {
+                "customer" -> onNavigateToCustomer(user)
+                "delivery" -> onNavigateToDelivery(user)
             }
         }
     }
@@ -110,13 +111,13 @@ fun LoginScreen(
                         .padding(24.dp),
                     verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
-                    // Email
+                    // Username (antes email)
                     Input(
-                        value = uiState.email,
-                        onValueChange = { viewModel.onEmailChange(it) },
-                        placeholder = "Correo electrónico",
-                        leadingIcon = Icons.Outlined.Email,
-                        keyboardType = KeyboardType.Email
+                        value = uiState.username,  // Cambiado de email a username
+                        onValueChange = { viewModel.onUsernameChange(it) },  // Cambiado
+                        placeholder = "Nombre de usuario",
+                        leadingIcon = Icons.Outlined.Person,  // Cambiado de Email a Person
+                        keyboardType = KeyboardType.Text  // Cambiado de Email a Text
                     )
 
                     // Contraseña
@@ -141,12 +142,14 @@ fun LoginScreen(
 
                     // Botón de login
                     Button(
-                        onClick = { viewModel.login() },
+                        onClick = {
+                            viewModel.login()
+                        },
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(52.dp),
                         enabled = !uiState.isLoading &&
-                                uiState.email.isNotBlank() &&
+                                uiState.username.isNotBlank() &&  // Cambiado
                                 uiState.password.isNotBlank(),
                         shape = RoundedCornerShape(12.dp)
                     ) {

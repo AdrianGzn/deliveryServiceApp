@@ -2,7 +2,7 @@ package com.alilopez.kt_demohilt.features.user.presentation.viewmodels
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.alilopez.kt_demohilt.features.user.domain.entities.User
+import com.alilopez.kt_demohilt.features.auth.domain.repositories.AuthRepository
 import com.alilopez.kt_demohilt.features.user.domain.usescase.UserLoginUseCase
 import com.alilopez.kt_demohilt.features.user.presentation.screens.LoginUIState
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -15,14 +15,15 @@ import javax.inject.Inject
 
 @HiltViewModel
 class LoginViewModel @Inject constructor(
-    private val userLoginUseCase: UserLoginUseCase
+    private val userLoginUseCase: UserLoginUseCase,
+    private val authRepository: AuthRepository
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(LoginUIState())
     val uiState: StateFlow<LoginUIState> = _uiState.asStateFlow()
 
-    fun onEmailChange(email: String) {
-        _uiState.update { it.copy(email = email) }
+    fun onUsernameChange(username: String) {
+        _uiState.update { it.copy(username = username) }
     }
 
     fun onPasswordChange(password: String) {
@@ -33,10 +34,14 @@ class LoginViewModel @Inject constructor(
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true, error = null) }
             try {
+                // Cambiado de 'email' a 'name' que es el parámetro correcto
                 val user = userLoginUseCase(
-                    email = _uiState.value.email,
+                    username = _uiState.value.username,  // Cambiado de email a name
                     password = _uiState.value.password
                 )
+
+                authRepository.setUserLoggedIn(user)
+
                 _uiState.update {
                     it.copy(
                         isLoading = false,

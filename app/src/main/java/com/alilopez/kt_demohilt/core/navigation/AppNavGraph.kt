@@ -11,6 +11,8 @@ import androidx.navigation.compose.composable
 import com.alilopez.kt_demohilt.core.navigation.routes.Screen
 import com.alilopez.kt_demohilt.features.auth.presentation.AuthViewModel
 import com.alilopez.kt_demohilt.features.feature01.presentation.HomeScreen
+import com.alilopez.kt_demohilt.features.order.presentation.screens.CustomerOrderScreen
+import com.alilopez.kt_demohilt.features.order.presentation.screens.DeliveryOrderScreen
 import com.alilopez.kt_demohilt.features.user.presentation.screens.LoginScreen
 import com.alilopez.kt_demohilt.features.user.presentation.screens.RegisterScreen
 import com.alilopez.kt_demohilt.features.user.presentation.viewmodels.LoginViewModel
@@ -22,11 +24,20 @@ fun AppNavGraph(
     modifier: Modifier = Modifier
 ) {
     val authViewModel: AuthViewModel = hiltViewModel()
-    val isUserLoggedIn by authViewModel.isUserLoggedIn.collectAsState()
+    val isUserLoggedIn by authViewModel.isUserLoggedIn.collectAsState(initial = false)
+    val userRole by authViewModel.userRole.collectAsState(initial = null)
+    val userId by authViewModel.userId.collectAsState(initial = null)
+
+    val startDestination = when {
+        !isUserLoggedIn -> Screen.Login.route
+        userRole == "customer" -> Screen.CustomerHome.route
+        userRole == "delivery" -> Screen.DeliveryHome.route
+        else -> Screen.Home.route
+    }
 
     NavHost(
         navController = navController,
-        startDestination = if (isUserLoggedIn) Screen.Home.route else Screen.Login.route,
+        startDestination = startDestination,
         modifier = modifier
     ) {
         composable(route = Screen.Login.route) {
@@ -34,14 +45,14 @@ fun AppNavGraph(
 
             LoginScreen(
                 viewModel = loginViewModel,
-                onNavigateToCustomer = {
-                    authViewModel.setUserLoggedIn("customer")
+                onNavigateToCustomer = { user ->
+                    authViewModel.setUserLoggedIn(user)
                     navController.navigate(Screen.CustomerHome.route) {
                         popUpTo(Screen.Login.route) { inclusive = true }
                     }
                 },
-                onNavigateToDelivery = {
-                    authViewModel.setUserLoggedIn("delivery")
+                onNavigateToDelivery = { user ->
+                    authViewModel.setUserLoggedIn(user)
                     navController.navigate(Screen.DeliveryHome.route) {
                         popUpTo(Screen.Login.route) { inclusive = true }
                     }
@@ -57,8 +68,25 @@ fun AppNavGraph(
 
             RegisterScreen(
                 viewModel = registerViewModel,
-                onRegisterSuccess = {
-                    navController.popBackStack()
+                onRegisterSuccess = { user ->
+                    authViewModel.setUserLoggedIn(user)
+                    when (user.role) {
+                        "customer" -> {
+                            navController.navigate(Screen.CustomerHome.route) {
+                                popUpTo(Screen.Register.route) { inclusive = true }
+                            }
+                        }
+                        "delivery" -> {
+                            navController.navigate(Screen.DeliveryHome.route) {
+                                popUpTo(Screen.Register.route) { inclusive = true }
+                            }
+                        }
+                        else -> {
+                            navController.navigate(Screen.Home.route) {
+                                popUpTo(Screen.Register.route) { inclusive = true }
+                            }
+                        }
+                    }
                 },
                 onNavigateToLogin = {
                     navController.popBackStack()
@@ -69,19 +97,23 @@ fun AppNavGraph(
         composable(route = Screen.Home.route) {
             HomeScreen(
                 onNavigateToCustomer = {
-                    navController.navigate(Screen.CustomerHome.route)
+                    navController.navigate(Screen.CustomerHome.route) {
+                        popUpTo(Screen.Home.route) { inclusive = true }
+                    }
                 },
                 onNavigateToDelivery = {
-                    navController.navigate(Screen.DeliveryHome.route)
+                    navController.navigate(Screen.DeliveryHome.route) {
+                        popUpTo(Screen.Home.route) { inclusive = true }
+                    }
                 }
             )
         }
 
         composable(route = Screen.CustomerHome.route) {
-            HomeScreen(
-                onNavigateToCustomer = { /* Ya estamos en customer */ },
-                onNavigateToDelivery = {
-                    navController.navigate(Screen.DeliveryHome.route) {
+            CustomerOrderScreen(
+                customerId = userId ?: 0,
+                onNavigateBack = {
+                    navController.navigate(Screen.Home.route) {
                         popUpTo(Screen.CustomerHome.route) { inclusive = true }
                     }
                 }
@@ -89,15 +121,14 @@ fun AppNavGraph(
         }
 
         composable(route = Screen.DeliveryHome.route) {
-            HomeScreen(
-                onNavigateToCustomer = {
-                    navController.navigate(Screen.CustomerHome.route) {
+            DeliveryOrderScreen(
+                deliveryId = userId ?: 0,
+                onNavigateBack = {
+                    navController.navigate(Screen.Home.route) {
                         popUpTo(Screen.DeliveryHome.route) { inclusive = true }
                     }
-                },
-                onNavigateToDelivery = { /* Ya estamos en delivery */ }
+                }
             )
         }
-
     }
 }

@@ -2,6 +2,7 @@ package com.alilopez.kt_demohilt.features.user.presentation.viewmodels
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.alilopez.kt_demohilt.features.auth.domain.repositories.AuthRepository
 import com.alilopez.kt_demohilt.features.user.domain.usescase.UserRegisterUseCase
 import com.alilopez.kt_demohilt.features.user.presentation.screens.RegisterUIState
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -14,7 +15,8 @@ import javax.inject.Inject
 
 @HiltViewModel
 class RegisterViewModel @Inject constructor(
-    private val userRegisterUseCase: UserRegisterUseCase
+    private val userRegisterUseCase: UserRegisterUseCase,
+    private val authRepository: AuthRepository  // ✅ Añadido para autenticar después del registro
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(RegisterUIState())
@@ -60,7 +62,15 @@ class RegisterViewModel @Inject constructor(
                     address = if (_address.value.isNotBlank()) _address.value else null
                 )
 
-                _uiState.update { it.copy(isRegistered = true, isLoading = false) }
+                authRepository.setUserLoggedIn(user)
+
+                _uiState.update {
+                    it.copy(
+                        isRegistered = true,
+                        isLoading = false,
+                        user = user
+                    )
+                }
 
             } catch (e: Exception) {
                 _uiState.update {

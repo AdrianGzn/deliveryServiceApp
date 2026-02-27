@@ -19,7 +19,7 @@ fun HomeScreen(
     modifier: Modifier = Modifier
 ) {
     val authViewModel: AuthViewModel = hiltViewModel()
-    val userRole by authViewModel.userRole.collectAsState()  // Ahora funciona
+    val userRole by authViewModel.userRole.collectAsState(initial = null)  // Ahora funciona
 
     Column(
         modifier = modifier

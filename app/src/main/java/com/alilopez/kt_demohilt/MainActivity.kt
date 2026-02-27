@@ -36,7 +36,8 @@ class MainActivity : ComponentActivity() {
                 val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
                 val authViewModel: AuthViewModel = hiltViewModel()
 
-                val isUserLoggedIn by authViewModel.isUserLoggedIn.collectAsStateWithLifecycle()
+
+                val isUserLoggedIn by authViewModel.isUserLoggedIn.collectAsState(initial = false)
                 val navBackStackEntry by navController.currentBackStackEntryAsState()
                 val currentRoute = navBackStackEntry?.destination?.route
 

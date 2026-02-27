@@ -2,7 +2,6 @@ package com.alilopez.kt_demohilt.features.user.presentation.screens
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -23,16 +22,17 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.alilopez.kt_demohilt.core.components.Input
+import com.alilopez.kt_demohilt.features.user.domain.entities.User
 import com.alilopez.kt_demohilt.features.user.presentation.viewmodels.RegisterViewModel
 
 @Composable
 fun RegisterScreen(
     viewModel: RegisterViewModel,
-    onRegisterSuccess: () -> Unit,
+    onRegisterSuccess: (User) -> Unit,
     onNavigateToLogin: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val uiState by viewModel.uiState.collectAsState()
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val isDarkTheme = isSystemInDarkTheme()
 
     val name by viewModel.name.collectAsStateWithLifecycle()
@@ -45,10 +45,21 @@ fun RegisterScreen(
     val textColor = if (isDarkTheme) Color.White else Color(0xFF212121)
     val secondaryTextColor = if (isDarkTheme) Color(0xFFB0B0B0) else Color(0xFF757575)
 
-    LaunchedEffect(uiState.isRegistered) {
-        if (uiState.isRegistered) {
-            onRegisterSuccess()
-        }
+
+    LaunchedEffect(key1 = Unit) {
+        snapshotFlow { uiState.isRegistered }
+            .collect { isRegistered ->
+                if (isRegistered) {
+                    val user = User(
+                        id = 0,
+                        name = name,
+                        password = password,
+                        role = selectedRole ?: "customer",
+                        address = address
+                    )
+                    onRegisterSuccess(user)
+                }
+            }
     }
 
     Box(
@@ -135,36 +146,54 @@ fun RegisterScreen(
 
                     // Tipo de usuario
                     Text(
-                        text = "Elige tu tipo de cuenta",
+                        text = "Tipo de cuenta",
                         fontSize = 14.sp,
                         fontWeight = FontWeight.Medium,
                         color = textColor,
                         modifier = Modifier.padding(top = 8.dp)
                     )
 
-                    // Botones de selección de rol - CLAROS Y GRANDES
+                    // Botones de selección de rol - VERSIÓN SIMPLIFICADA
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
-                        // Botón Cliente
-                        RoleSelectButton(
-                            text = "Cliente",
-                            icon = Icons.Default.ShoppingCart,
-                            isSelected = selectedRole == "customer",
-                            selectedColor = Color(0xFF4CAF50),
+                        // Botón Cliente simplificado
+                        FilterChip(
+                            selected = selectedRole == "customer",
                             onClick = { viewModel.onRoleChange("customer") },
-                            modifier = Modifier.weight(1f)
+                            label = { Text("Cliente") },
+                            leadingIcon = {
+                                Icon(
+                                    Icons.Default.Person,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(18.dp)
+                                )
+                            },
+                            modifier = Modifier.weight(1f),
+                            colors = FilterChipDefaults.filterChipColors(
+                                selectedContainerColor = MaterialTheme.colorScheme.primaryContainer,
+                                selectedLeadingIconColor = MaterialTheme.colorScheme.primary
+                            )
                         )
 
-                        // Botón Repartidor
-                        RoleSelectButton(
-                            text = "Repartidor",
-                            icon = Icons.Default.DeliveryDining,
-                            isSelected = selectedRole == "delivery",
-                            selectedColor = Color(0xFF2196F3),
+                        // Botón Repartidor simplificado
+                        FilterChip(
+                            selected = selectedRole == "delivery",
                             onClick = { viewModel.onRoleChange("delivery") },
-                            modifier = Modifier.weight(1f)
+                            label = { Text("Repartidor") },
+                            leadingIcon = {
+                                Icon(
+                                    Icons.Default.DeliveryDining,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(18.dp)
+                                )
+                            },
+                            modifier = Modifier.weight(1f),
+                            colors = FilterChipDefaults.filterChipColors(
+                                selectedContainerColor = MaterialTheme.colorScheme.primaryContainer,
+                                selectedLeadingIconColor = MaterialTheme.colorScheme.primary
+                            )
                         )
                     }
 
@@ -189,7 +218,7 @@ fun RegisterScreen(
 
                     Spacer(modifier = Modifier.height(8.dp))
 
-                    // Botón de registro - color según rol seleccionado
+                    // Botón de registro - simplificado
                     Button(
                         onClick = { viewModel.onRegisterClick() },
                         modifier = Modifier
@@ -197,15 +226,9 @@ fun RegisterScreen(
                             .height(52.dp),
                         enabled = !uiState.isLoading &&
                                 name.isNotBlank() &&
-                                password.isNotBlank(),
-                        shape = RoundedCornerShape(12.dp),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = when (selectedRole) {
-                                "customer" -> Color(0xFF4CAF50)
-                                "delivery" -> Color(0xFF2196F3)
-                                else -> MaterialTheme.colorScheme.primary
-                            }
-                        )
+                                password.isNotBlank() &&
+                                selectedRole != null,
+                        shape = RoundedCornerShape(12.dp)
                     ) {
                         if (uiState.isLoading) {
                             CircularProgressIndicator(
@@ -249,62 +272,6 @@ fun RegisterScreen(
                     )
                 }
             }
-        }
-    }
-}
-
-@Composable
-fun RoleSelectButton(
-    text: String,
-    icon: androidx.compose.ui.graphics.vector.ImageVector,
-    isSelected: Boolean,
-    selectedColor: Color,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-    val backgroundColor = if (isSelected) {
-        selectedColor.copy(alpha = 0.1f)
-    } else {
-        Color.Transparent
-    }
-
-    val borderColor = if (isSelected) {
-        selectedColor
-    } else {
-        Color.Gray.copy(alpha = 0.3f)
-    }
-
-    val contentColor = if (isSelected) selectedColor else Color.Gray
-
-    Card(
-        modifier = modifier
-            .height(90.dp),
-        shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = backgroundColor
-        ),
-        border = BorderStroke(1.dp, borderColor),
-        elevation = CardDefaults.cardElevation(if (isSelected) 4.dp else 0.dp),
-        onClick = onClick
-    ) {
-        Column(
-            modifier = Modifier.fillMaxSize(),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
-        ) {
-            Icon(
-                imageVector = icon,
-                contentDescription = null,
-                tint = contentColor,
-                modifier = Modifier.size(32.dp)
-            )
-            Spacer(modifier = Modifier.height(4.dp))
-            Text(
-                text = text,
-                fontSize = 14.sp,
-                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
-                color = contentColor
-            )
         }
     }
 }
