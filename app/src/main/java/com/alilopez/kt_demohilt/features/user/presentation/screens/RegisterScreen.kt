@@ -1,6 +1,5 @@
 package com.alilopez.kt_demohilt.features.user.presentation.screens
 
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
@@ -38,6 +37,8 @@ fun RegisterScreen(
     val name by viewModel.name.collectAsStateWithLifecycle()
     val password by viewModel.password.collectAsStateWithLifecycle()
     val address by viewModel.address.collectAsStateWithLifecycle()
+    val establishmentName by viewModel.establishmentName.collectAsStateWithLifecycle()
+    val establishmentAddress by viewModel.establishmentAddress.collectAsStateWithLifecycle()
     val selectedRole by viewModel.selectedRole.collectAsStateWithLifecycle()
 
     val backgroundColor = if (isDarkTheme) Color(0xFF121212) else Color(0xFFF5F5F5)
@@ -46,20 +47,10 @@ fun RegisterScreen(
     val secondaryTextColor = if (isDarkTheme) Color(0xFFB0B0B0) else Color(0xFF757575)
 
 
-    LaunchedEffect(key1 = Unit) {
-        snapshotFlow { uiState.isRegistered }
-            .collect { isRegistered ->
-                if (isRegistered) {
-                    val user = User(
-                        id = 0,
-                        name = name,
-                        password = password,
-                        role = selectedRole ?: "customer",
-                        address = address
-                    )
-                    onRegisterSuccess(user)
-                }
-            }
+    LaunchedEffect(key1 = uiState.isRegistered) {
+        if (uiState.isRegistered && uiState.user != null) {
+            onRegisterSuccess(uiState.user!!)
+        }
     }
 
     Box(
@@ -74,10 +65,8 @@ fun RegisterScreen(
                 .padding(24.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // Espaciado superior
             Spacer(modifier = Modifier.height(48.dp))
 
-            // Logo o ícono
             Box(
                 modifier = Modifier
                     .size(80.dp)
@@ -95,7 +84,6 @@ fun RegisterScreen(
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            // Título
             Text(
                 text = "Crear cuenta",
                 fontSize = 28.sp,
@@ -112,7 +100,6 @@ fun RegisterScreen(
 
             Spacer(modifier = Modifier.height(32.dp))
 
-            // Formulario
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(16.dp),
@@ -125,7 +112,6 @@ fun RegisterScreen(
                         .padding(24.dp),
                     verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
-                    // Nombre
                     Input(
                         value = name,
                         onValueChange = { viewModel.onNameChange(it) },
@@ -134,7 +120,6 @@ fun RegisterScreen(
                         keyboardType = KeyboardType.Text
                     )
 
-                    // Contraseña
                     Input(
                         value = password,
                         onValueChange = { viewModel.onPasswordChange(it) },
@@ -144,7 +129,6 @@ fun RegisterScreen(
                         keyboardType = KeyboardType.Password
                     )
 
-                    // Tipo de usuario
                     Text(
                         text = "Tipo de cuenta",
                         fontSize = 14.sp,
@@ -153,60 +137,69 @@ fun RegisterScreen(
                         modifier = Modifier.padding(top = 8.dp)
                     )
 
-                    // Botones de selección de rol - VERSIÓN SIMPLIFICADA
+                    // Selección de Roles (3 opciones ahora)
                     Row(
                         modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        // Botón Cliente simplificado
                         FilterChip(
                             selected = selectedRole == "customer",
                             onClick = { viewModel.onRoleChange("customer") },
-                            label = { Text("Cliente") },
-                            leadingIcon = {
-                                Icon(
-                                    Icons.Default.Person,
-                                    contentDescription = null,
-                                    modifier = Modifier.size(18.dp)
-                                )
-                            },
-                            modifier = Modifier.weight(1f),
-                            colors = FilterChipDefaults.filterChipColors(
-                                selectedContainerColor = MaterialTheme.colorScheme.primaryContainer,
-                                selectedLeadingIconColor = MaterialTheme.colorScheme.primary
-                            )
+                            label = { Text("Cliente", fontSize = 12.sp) },
+                            modifier = Modifier.weight(1f)
                         )
 
-                        // Botón Repartidor simplificado
                         FilterChip(
                             selected = selectedRole == "delivery",
                             onClick = { viewModel.onRoleChange("delivery") },
-                            label = { Text("Repartidor") },
-                            leadingIcon = {
-                                Icon(
-                                    Icons.Default.DeliveryDining,
-                                    contentDescription = null,
-                                    modifier = Modifier.size(18.dp)
-                                )
-                            },
-                            modifier = Modifier.weight(1f),
-                            colors = FilterChipDefaults.filterChipColors(
-                                selectedContainerColor = MaterialTheme.colorScheme.primaryContainer,
-                                selectedLeadingIconColor = MaterialTheme.colorScheme.primary
-                            )
+                            label = { Text("Repartidor", fontSize = 12.sp) },
+                            modifier = Modifier.weight(1f)
+                        )
+
+                        FilterChip(
+                            selected = selectedRole == "seller",
+                            onClick = { viewModel.onRoleChange("seller") },
+                            label = { Text("Vendedor", fontSize = 12.sp) },
+                            modifier = Modifier.weight(1f)
                         )
                     }
 
-                    // Dirección (opcional)
+                    // Campo de dirección general
                     Input(
                         value = address,
                         onValueChange = { viewModel.onAddressChange(it) },
-                        placeholder = "Dirección (opcional)",
+                        placeholder = "Dirección",
                         leadingIcon = Icons.Outlined.Home,
                         keyboardType = KeyboardType.Text
                     )
 
-                    // Error message
+                    // Campos específicos para SELLER
+                    if (selectedRole == "seller") {
+                        Divider(modifier = Modifier.padding(vertical = 8.dp))
+                        Text(
+                            text = "Información del establecimiento",
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                        
+                        Input(
+                            value = establishmentName,
+                            onValueChange = { viewModel.onEstablishmentNameChange(it) },
+                            placeholder = "Nombre del establecimiento",
+                            leadingIcon = Icons.Outlined.Store,
+                            keyboardType = KeyboardType.Text
+                        )
+
+                        Input(
+                            value = establishmentAddress,
+                            onValueChange = { viewModel.onEstablishmentAddressChange(it) },
+                            placeholder = "Dirección del establecimiento",
+                            leadingIcon = Icons.Outlined.LocationOn,
+                            keyboardType = KeyboardType.Text
+                        )
+                    }
+
                     if (uiState.errorMessage != null) {
                         Text(
                             text = uiState.errorMessage ?: "",
@@ -218,7 +211,6 @@ fun RegisterScreen(
 
                     Spacer(modifier = Modifier.height(8.dp))
 
-                    // Botón de registro - simplificado
                     Button(
                         onClick = { viewModel.onRegisterClick() },
                         modifier = Modifier
@@ -227,7 +219,7 @@ fun RegisterScreen(
                         enabled = !uiState.isLoading &&
                                 name.isNotBlank() &&
                                 password.isNotBlank() &&
-                                selectedRole != null,
+                                (selectedRole != "seller" || (establishmentName.isNotBlank() && establishmentAddress.isNotBlank())),
                         shape = RoundedCornerShape(12.dp)
                     ) {
                         if (uiState.isLoading) {
@@ -249,7 +241,6 @@ fun RegisterScreen(
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            // Enlace a login
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.Center,

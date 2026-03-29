@@ -7,7 +7,9 @@ interface UserRepository {
         name: String,
         password: String,
         role: String,
-        address: String?
+        address: String? = null,
+        establishmentName: String? = null,
+        establishmentAddress: String? = null
     ): User
 
 

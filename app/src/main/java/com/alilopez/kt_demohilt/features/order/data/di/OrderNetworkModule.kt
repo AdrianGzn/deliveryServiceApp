@@ -1,6 +1,5 @@
 package com.alilopez.kt_demohilt.features.order.data.di
 
-import com.alilopez.kt_demohilt.core.di.DelivaryServiceRetrofit
 import com.alilopez.kt_demohilt.features.order.data.datasources.remote.api.OrderApi
 import dagger.Module
 import dagger.Provides
@@ -16,7 +15,7 @@ object OrderNetworkModule {
     @Provides
     @Singleton
     fun provideOrderApi(
-        @DelivaryServiceRetrofit retrofit: Retrofit
+        retrofit: Retrofit
     ): OrderApi {
         return retrofit.create(OrderApi::class.java)
     }

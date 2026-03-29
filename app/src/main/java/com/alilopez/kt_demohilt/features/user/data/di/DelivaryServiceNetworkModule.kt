@@ -1,6 +1,5 @@
 package com.alilopez.kt_demohilt.features.user.data.di
 
-import com.alilopez.kt_demohilt.core.di.DelivaryServiceRetrofit
 import com.alilopez.kt_demohilt.features.user.data.datasources.remote.api.UserApi
 import dagger.Module
 import dagger.Provides
@@ -15,7 +14,7 @@ object DelivaryServiceNetworkModule {
 
     @Provides
     @Singleton
-    fun provideUserApi(@DelivaryServiceRetrofit retrofit: Retrofit): UserApi {
+    fun provideUserApi(retrofit: Retrofit): UserApi {
         return retrofit.create(UserApi::class.java)
     }
 }

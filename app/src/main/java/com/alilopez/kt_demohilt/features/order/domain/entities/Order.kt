@@ -9,6 +9,7 @@ data class Order(
     val establishmentAddress: String,
     val price: Double,
     val userId: Int,
+    val sellerId: Int,
     val deliveryId: Int? = null,
     val createdAt: String = "",
     val updatedAt: String = ""

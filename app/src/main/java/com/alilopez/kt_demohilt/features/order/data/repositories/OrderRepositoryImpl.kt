@@ -3,6 +3,7 @@ package com.alipoez.kt_demohilt.features.order.data.repositories
 import com.alilopez.kt_demohilt.features.order.data.datasources.remote.api.OrderApi
 import com.alilopez.kt_demohilt.features.order.domain.entities.Order
 import com.alipoez.kt_demohilt.features.order.data.datasources.remote.model.OrderAssignDTO
+import com.alipoez.kt_demohilt.features.order.data.datasources.remote.model.OrderItemRequestDTO
 import com.alipoez.kt_demohilt.features.order.data.datasources.remote.model.OrderRequestDTO
 import com.alipoez.kt_demohilt.features.order.data.datasources.remote.model.OrderStatusUpdateDTO
 import com.alipoez.kt_demohilt.features.order.data.datasources.remote.mapper.toDomain
@@ -19,7 +20,9 @@ class OrderRepositoryImpl @Inject constructor(
         establishmentName: String,
         establishmentAddress: String,
         price: Double,
-        userId: Int
+        userId: Int,
+        sellerId: Int,
+        items: List<OrderItemRequestDTO>
     ): Order {
         val request = OrderRequestDTO(
             title = title,
@@ -27,7 +30,9 @@ class OrderRepositoryImpl @Inject constructor(
             establishmentName = establishmentName,
             establishmentAddress = establishmentAddress,
             price = price,
-            userId = userId
+            userId = userId,
+            sellerId = sellerId,
+            items = items
         )
         return orderApi.createOrder(request).toDomain()
     }

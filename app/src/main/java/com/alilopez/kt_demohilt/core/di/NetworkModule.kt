@@ -1,5 +1,7 @@
 package com.alilopez.kt_demohilt.core.di
 
+import com.alilopez.kt_demohilt.BuildConfig
+import com.google.gson.Gson
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -15,14 +17,20 @@ object NetworkModule {
 
     @Provides
     @Singleton
-    @DelivaryServiceRetrofit
-    fun provideDeliveryServiceRetrofit(
-        okHttpClient: OkHttpClient  // Inyecta el OkHttpClient del módulo
+    fun provideGson(): Gson {
+        return Gson()
+    }
+
+    @Provides
+    @Singleton
+    fun provideRetrofit(
+        okHttpClient: OkHttpClient,
+        gson: Gson
     ): Retrofit {
         return Retrofit.Builder()
-            .baseUrl("http://10.0.2.2:8080/")
-            .client(okHttpClient)  // Usa el mismo cliente
-            .addConverterFactory(GsonConverterFactory.create())
+            .baseUrl(BuildConfig.BASE_URL)
+            .client(okHttpClient)
+            .addConverterFactory(GsonConverterFactory.create(gson))
             .build()
     }
 }

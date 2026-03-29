@@ -9,7 +9,9 @@ fun UserDTO.toDomain(): UserResponse {
         id = this.id,
         name = this.name,
         role = this.role,
-        address = this.address
+        address = this.address,
+        establishmentName = this.establishmentName,
+        establishmentAddress = this.establishmentAddress
     )
 }
 
@@ -18,6 +20,8 @@ fun User.toDTO(): UserDTO {
         id = this.id,
         name = this.name,
         role = this.role,
-        address = this.address
+        address = this.address,
+        establishmentName = this.establishmentName,
+        establishmentAddress = this.establishmentAddress
     )
 }

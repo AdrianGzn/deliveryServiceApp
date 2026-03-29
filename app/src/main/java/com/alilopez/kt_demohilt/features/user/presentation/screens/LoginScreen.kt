@@ -29,6 +29,7 @@ fun LoginScreen(
     viewModel: LoginViewModel = hiltViewModel(),
     onNavigateToCustomer: (User) -> Unit,
     onNavigateToDelivery: (User) -> Unit,
+    onNavigateToSeller: (User) -> Unit,
     onNavigateToRegister: () -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -44,6 +45,7 @@ fun LoginScreen(
             when (user.role) {
                 "customer" -> onNavigateToCustomer(user)
                 "delivery" -> onNavigateToDelivery(user)
+                "seller" -> onNavigateToSeller(user)
             }
         }
     }

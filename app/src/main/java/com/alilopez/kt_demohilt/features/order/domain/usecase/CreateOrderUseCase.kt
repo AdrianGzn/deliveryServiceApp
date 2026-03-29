@@ -2,6 +2,7 @@ package com.alipoez.kt_demohilt.features.order.domain.usecase
 
 import com.alilopez.kt_demohilt.features.order.domain.entities.Order
 import com.alipoez.kt_demohilt.features.order.domain.repositories.OrderRepository
+import com.alipoez.kt_demohilt.features.order.data.datasources.remote.model.OrderItemRequestDTO
 import javax.inject.Inject
 
 class CreateOrderUseCase @Inject constructor(
@@ -13,7 +14,9 @@ class CreateOrderUseCase @Inject constructor(
         establishmentName: String,
         establishmentAddress: String,
         price: Double,
-        userId: Int
+        userId: Int,
+        sellerId: Int,
+        items: List<OrderItemRequestDTO> = emptyList()
     ): Order {
         return repository.createOrder(
             title = title,
@@ -21,7 +24,9 @@ class CreateOrderUseCase @Inject constructor(
             establishmentName = establishmentName,
             establishmentAddress = establishmentAddress,
             price = price,
-            userId = userId
+            userId = userId,
+            sellerId = sellerId,
+            items = items
         )
     }
 }

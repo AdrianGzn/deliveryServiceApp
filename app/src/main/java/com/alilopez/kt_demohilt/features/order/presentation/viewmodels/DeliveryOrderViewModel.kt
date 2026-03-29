@@ -1,8 +1,8 @@
-package com.alipoez.kt_demohilt.features.order.presentation.viewmodels
+package com.alilopez.kt_demohilt.features.order.presentation.viewmodels
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.alilopez.kt_demohilt.core.managers.SSEManager
+import com.alilopez.kt_demohilt.core.managers.WebSocketManager
 import com.alilopez.kt_demohilt.features.order.domain.entities.Order
 import com.alipoez.kt_demohilt.features.order.domain.usecase.*
 import com.alipoez.kt_demohilt.features.order.presentation.states.DeliveryOrderUIState
@@ -25,7 +25,7 @@ class DeliveryOrderViewModel @Inject constructor(
     private val getOrderByIdUseCase: GetOrderByIdUseCase,
     private val updateOrderStatusUseCase: UpdateOrderStatusUseCase,
     private val assignDeliveryUseCase: AssignDeliveryUseCase,
-    private val sseManager: SSEManager
+    private val webSocketManager: WebSocketManager
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow<DeliveryOrderUIState>(DeliveryOrderUIState.Loading)
@@ -35,22 +35,14 @@ class DeliveryOrderViewModel @Inject constructor(
 
     init {
         viewModelScope.launch {
-            initializeSSE()
+            observeWebSocket()
         }
     }
 
-    private suspend fun initializeSSE() {
-        sseManager.connect(
-            onOrderUpdate = { updatedOrder ->
-                handleOrderUpdate(updatedOrder)
-            },
-            onOrderDeleted = { deletedOrderId ->
-                handleOrderDeleted(deletedOrderId)
-            },
-            onError = { error ->
-                handleError("Error en conexión SSE: $error")
-            }
-        )
+    private suspend fun observeWebSocket() {
+        webSocketManager.orderUpdates.collect { updatedOrder ->
+            handleOrderUpdate(updatedOrder)
+        }
     }
 
     fun loadData(deliveryId: Int) {
@@ -78,8 +70,8 @@ class DeliveryOrderViewModel @Inject constructor(
                     )
                 }
 
-                // Conectar SSE específico para este repartidor
-                sseManager.connectToUser(deliveryId)
+                // Conectar WebSocket específico para este repartidor
+                webSocketManager.connect(deliveryId)
 
             } catch (e: Exception) {
                 _uiState.update {
@@ -218,33 +210,6 @@ class DeliveryOrderViewModel @Inject constructor(
         }
     }
 
-    private fun handleOrderDeleted(deletedOrderId: Int) {
-        viewModelScope.launch {
-            _uiState.update { currentState ->
-                if (currentState is DeliveryOrderUIState.Success) {
-
-                    addNotification(
-                        OrderNotification(
-                            id = UUID.randomUUID().toString(),
-                            orderId = deletedOrderId,
-                            message = "Pedido #$deletedOrderId ha sido cancelado",
-                            type = NotificationType.ORDER_CANCELLED
-                        )
-                    )
-
-                    DeliveryOrderUIState.Success(
-                        availableOrders = currentState.availableOrders.filter { it.id != deletedOrderId },
-                        myAssignedOrders = currentState.myAssignedOrders.filter { it.id != deletedOrderId },
-                        activeDelivery = currentState.activeDelivery?.takeIf { it.id != deletedOrderId },
-                        notifications = currentState.notifications
-                    )
-                } else {
-                    currentState
-                }
-            }
-        }
-    }
-
     private fun addNotification(notification: OrderNotification) {
         viewModelScope.launch {
             _uiState.update { currentState ->
@@ -293,8 +258,6 @@ class DeliveryOrderViewModel @Inject constructor(
 
     override fun onCleared() {
         super.onCleared()
-        viewModelScope.launch {
-            sseManager.disconnect()
-        }
+        webSocketManager.disconnect()
     }
 }

@@ -19,5 +19,18 @@ data class OrderRequestDTO(
     val price: Double,
 
     @SerializedName("userId")
-    val userId: Int
+    val userId: Int,
+
+    @SerializedName("sellerId")
+    val sellerId: Int,
+
+    @SerializedName("items")
+    val items: List<OrderItemRequestDTO> = emptyList()
+)
+
+data class OrderItemRequestDTO(
+    @SerializedName("foodId")
+    val foodId: Int,
+    @SerializedName("quantity")
+    val quantity: Int
 )

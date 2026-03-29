@@ -4,7 +4,6 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
@@ -16,87 +15,72 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.alilopez.kt_demohilt.features.order.domain.entities.Order
+import com.alilopez.kt_demohilt.features.order.presentation.viewmodels.DeliveryOrderViewModel
 import com.alipoez.kt_demohilt.features.order.presentation.states.DeliveryOrderUIState
-import com.alipoez.kt_demohilt.features.order.presentation.viewmodels.DeliveryOrderViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DeliveryOrderScreen(
     viewModel: DeliveryOrderViewModel = hiltViewModel(),
-    deliveryId: Int,
-    onNavigateBack: () -> Unit
+    deliveryId: Int
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     var selectedTab by remember { mutableIntStateOf(0) }
 
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text("Panel de Repartidor") },
-                navigationIcon = {
-                    IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
-                    }
-                }
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+    ) {
+        // Stats rápidas
+        DeliveryStatsCard()
+
+        // Tabs
+        PrimaryTabRow(selectedTabIndex = selectedTab) {
+            Tab(
+                selected = selectedTab == 0,
+                onClick = { selectedTab = 0 },
+                text = { Text("Disponibles") },
+                icon = { Icon(Icons.AutoMirrored.Filled.List, contentDescription = null) }
+            )
+            Tab(
+                selected = selectedTab == 1,
+                onClick = { selectedTab = 1 },
+                text = { Text("Mis Pedidos") },
+                icon = { Icon(Icons.Default.DeliveryDining, contentDescription = null) }
             )
         }
-    ) { paddingValues ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues)
-        ) {
-            // Stats rápidas
-            DeliveryStatsCard()
 
-            // Tabs
-            PrimaryTabRow(selectedTabIndex = selectedTab) {
-                Tab(
-                    selected = selectedTab == 0,
-                    onClick = { selectedTab = 0 },
-                    text = { Text("Disponibles") },
-                    icon = { Icon(Icons.AutoMirrored.Filled.List, contentDescription = null) }
-                )
-                Tab(
-                    selected = selectedTab == 1,
-                    onClick = { selectedTab = 1 },
-                    text = { Text("Mis Pedidos") },
-                    icon = { Icon(Icons.Default.DeliveryDining, contentDescription = null) }
-                )
+        // Contenido según tab
+        when (val state = uiState) {
+            is DeliveryOrderUIState.Loading -> {
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    CircularProgressIndicator()
+                }
             }
 
-            // Contenido según tab
-            when (val state = uiState) {
-                is DeliveryOrderUIState.Loading -> {
-                    Box(
-                        modifier = Modifier.fillMaxSize(),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        CircularProgressIndicator()
-                    }
-                }
-
-                is DeliveryOrderUIState.Success -> {
-                    when (selectedTab) {
-                        0 -> AvailableOrdersContent(
-                            orders = state.availableOrders,
-                            onAcceptOrder = { viewModel.acceptOrder(it, deliveryId) }
-                        )
-                        1 -> MyDeliveriesContent(
-                            orders = state.myAssignedOrders,
-                            onUpdateStatus = { orderId, status ->
-                                viewModel.updateOrderStatus(orderId, status, deliveryId)
-                            }
-                        )
-                    }
-                }
-
-                is DeliveryOrderUIState.Error -> {
-                    ErrorContent(
-                        message = state.message,
-                        onRetry = { viewModel.loadData(deliveryId) }
+            is DeliveryOrderUIState.Success -> {
+                when (selectedTab) {
+                    0 -> AvailableOrdersContent(
+                        orders = state.availableOrders,
+                        onAcceptOrder = { viewModel.acceptOrder(it, deliveryId) }
+                    )
+                    1 -> MyDeliveriesContent(
+                        orders = state.myAssignedOrders,
+                        onUpdateStatus = { orderId, status ->
+                            viewModel.updateOrderStatus(orderId, status, deliveryId)
+                        }
                     )
                 }
+            }
+
+            is DeliveryOrderUIState.Error -> {
+                ErrorContent(
+                    message = state.message,
+                    onRetry = { viewModel.loadData(deliveryId) }
+                )
             }
         }
     }
@@ -115,7 +99,6 @@ fun DeliveryStatsCard() {
                 .padding(16.dp),
             horizontalArrangement = Arrangement.SpaceEvenly
         ) {
-            // Estos valores vendrían del ViewModel en un caso real
             StatItem(
                 icon = Icons.Default.DeliveryDining,
                 value = "3",

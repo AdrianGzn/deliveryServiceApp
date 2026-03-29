@@ -11,10 +11,12 @@ fun OrderResponseDTO.toDomain(): Order {
         title = this.title,
         description = this.description,
         status = this.status,
-        establishmentName = this.establishmentName,
-        establishmentAddress = this.establishmentAddress,
+        // Si el servidor no envía el nombre del local, ponemos uno por defecto
+        establishmentName = this.establishmentName ?: "Local Desconocido",
+        establishmentAddress = this.establishmentAddress ?: "Sin dirección",
         price = this.price,
         userId = this.userId,
+        sellerId = this.sellerId,
         deliveryId = this.deliveryId,
         createdAt = this.createdAt,
         updatedAt = this.updatedAt
@@ -28,6 +30,7 @@ fun Order.toRequestDTO(): OrderRequestDTO {
         establishmentName = this.establishmentName,
         establishmentAddress = this.establishmentAddress,
         price = this.price,
-        userId = this.userId
+        userId = this.userId,
+        sellerId = this.sellerId
     )
 }

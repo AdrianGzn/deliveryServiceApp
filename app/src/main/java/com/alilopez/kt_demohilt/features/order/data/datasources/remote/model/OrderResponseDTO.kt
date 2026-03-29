@@ -13,19 +13,22 @@ data class OrderResponseDTO(
     val description: String,
 
     @SerializedName("status")
-    val status: String,  // "pending", "pickup", "in_coming", "arrived", "delivered"
+    val status: String,
 
     @SerializedName("establishmentName")
-    val establishmentName: String,
+    val establishmentName: String?, // Cambiado a nullable
 
     @SerializedName("establishmentAddress")
-    val establishmentAddress: String,
+    val establishmentAddress: String?, // Cambiado a nullable
 
     @SerializedName("price")
     val price: Double,
 
     @SerializedName("userId")
     val userId: Int,
+
+    @SerializedName("sellerId")
+    val sellerId: Int,
 
     @SerializedName("deliveryId")
     val deliveryId: Int?,

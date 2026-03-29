@@ -6,20 +6,17 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material3.DrawerValue
-import androidx.compose.material3.ModalNavigationDrawer
-import androidx.compose.material3.rememberDrawerState
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.alilopez.kt_demohilt.core.navigation.AppNavGraph
 import com.alilopez.kt_demohilt.core.navigation.routes.Screen
-import com.alilopez.kt_demohilt.core.navigation.ui.AppDrawer
 import com.alilopez.kt_demohilt.core.navigation.ui.AppTopBar
 import com.alilopez.kt_demohilt.core.ui.theme.AppTheme
 import com.alilopez.kt_demohilt.features.auth.presentation.AuthViewModel
@@ -33,9 +30,7 @@ class MainActivity : ComponentActivity() {
         setContent {
             AppTheme {
                 val navController = rememberNavController()
-                val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
                 val authViewModel: AuthViewModel = hiltViewModel()
-
 
                 val isUserLoggedIn by authViewModel.isUserLoggedIn.collectAsState(initial = false)
                 val navBackStackEntry by navController.currentBackStackEntryAsState()
@@ -48,36 +43,29 @@ class MainActivity : ComponentActivity() {
                     when (currentRoute) {
                         Screen.Login.route -> "Iniciar Sesión"
                         Screen.Register.route -> "Registro"
-                        Screen.Home.route -> "Inicio"
-                        Screen.CustomerHome.route -> "Panel Cliente"
+                        Screen.CustomerHome.route -> "Marketplace"
                         Screen.DeliveryHome.route -> "Panel Repartidor"
-                        Screen.Posts.route -> "Posts"
-                        Screen.Pets.route -> "Mascotas"
-                        else -> "Mi App"
+                        Screen.SellerHome.route -> "Mi Tienda"
+                        else -> "Delivery App"
                     }
                 }
 
-                ModalNavigationDrawer(
-                    drawerState = drawerState,
-                    drawerContent = {
-                        if (isUserLoggedIn && !isAuthScreen) {
-                            AppDrawer(
-                                drawerState = drawerState,
-                                navController = navController,
-                                modifier = Modifier.fillMaxSize()
-                            )
-                        }
-                    },
-                    gesturesEnabled = isUserLoggedIn && !isAuthScreen
-                ) {
-                    Column {
+                Scaffold(
+                    topBar = {
                         if (isUserLoggedIn && !isAuthScreen) {
                             AppTopBar(
-                                drawerState = drawerState,
-                                title = title
+                                title = title,
+                                onLogout = {
+                                    authViewModel.logout()
+                                    navController.navigate(Screen.Login.route) {
+                                        popUpTo(0) { inclusive = true }
+                                    }
+                                }
                             )
                         }
-
+                    }
+                ) { padding ->
+                    Column(modifier = Modifier.fillMaxSize().padding(padding)) {
                         AppNavGraph(
                             navController = navController,
                             modifier = Modifier.weight(1f)

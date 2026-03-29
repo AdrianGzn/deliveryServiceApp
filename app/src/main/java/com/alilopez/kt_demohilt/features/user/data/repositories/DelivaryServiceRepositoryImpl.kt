@@ -20,27 +20,31 @@ class UserRepositoryImpl @Inject constructor(
         name: String,
         password: String,
         role: String,
-        address: String?
+        address: String?,
+        establishmentName: String?,
+        establishmentAddress: String?
     ): User {
         val registerRequest = RegisterRequestDTO(
             name = name,
             password = password,
             role = role,
-            address = address
+            address = address,
+            establishmentName = establishmentName,
+            establishmentAddress = establishmentAddress
         )
 
         Log.d("Register", "Enviando: $registerRequest")
 
-        // register retorna UserDTO, lo convertimos a UserResponse
         val userResponse = api.register(registerRequest).toDomain()
 
-        // Creamos User con password vacío (o podrías cambiar la firma del repositorio)
         return User(
             id = userResponse.id,
             name = userResponse.name,
             role = userResponse.role,
-            password = "",  // El backend no devuelve password
-            address = userResponse.address
+            password = "",
+            address = userResponse.address,
+            establishmentName = userResponse.establishmentName,
+            establishmentAddress = userResponse.establishmentAddress
         )
     }
 
@@ -52,17 +56,17 @@ class UserRepositoryImpl @Inject constructor(
 
         Log.d("Login", "Enviando: $loginRequest")
 
-        // login retorna UserDTO, lo convertimos a UserResponse
         val userResponse = api.login(loginRequest).toDomain()
         Log.d("Login", "Respuesta: $userResponse")
 
-        // Creamos User con password vacío
         return User(
             id = userResponse.id,
             name = userResponse.name,
             role = userResponse.role,
-            password = "",  // El backend no devuelve password
-            address = userResponse.address
+            password = "",
+            address = userResponse.address,
+            establishmentName = userResponse.establishmentName,
+            establishmentAddress = userResponse.establishmentAddress
         )
     }
 

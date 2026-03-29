@@ -1,6 +1,7 @@
 package com.alipoez.kt_demohilt.features.order.domain.repositories
 
 import com.alilopez.kt_demohilt.features.order.domain.entities.Order
+import com.alipoez.kt_demohilt.features.order.data.datasources.remote.model.OrderItemRequestDTO
 
 
 interface OrderRepository {
@@ -12,7 +13,9 @@ interface OrderRepository {
         establishmentName: String,
         establishmentAddress: String,
         price: Double,
-        userId: Int
+        userId: Int,
+        sellerId: Int,
+        items: List<OrderItemRequestDTO> = emptyList()
     ): Order
 
     // Obtener todas las órdenes

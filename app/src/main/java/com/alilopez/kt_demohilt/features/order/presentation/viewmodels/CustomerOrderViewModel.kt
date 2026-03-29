@@ -2,9 +2,9 @@ package com.alipoez.kt_demohilt.features.order.presentation.viewmodels
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.alilopez.kt_demohilt.core.managers.SSEManager
+import com.alilopez.kt_demohilt.core.managers.WebSocketManager
 import com.alilopez.kt_demohilt.features.order.domain.entities.Order
-import com.alipoez.kt_demohilt.features.order.domain.usecase.*
+import com.alipoez.kt_demohilt.features.order.domain.repositories.OrderRepository
 import com.alipoez.kt_demohilt.features.order.presentation.states.CustomerOrderUIState
 import com.alipoez.kt_demohilt.features.order.presentation.states.NotificationType
 import com.alipoez.kt_demohilt.features.order.presentation.states.OrderNotification
@@ -20,12 +20,8 @@ import javax.inject.Inject
 
 @HiltViewModel
 class CustomerOrderViewModel @Inject constructor(
-    private val createOrderUseCase: CreateOrderUseCase,
-    private val getUserOrdersUseCase: GetUserOrdersUseCase,
-    private val getOrderByIdUseCase: GetOrderByIdUseCase,
-    private val updateOrderStatusUseCase: UpdateOrderStatusUseCase,
-    private val deleteOrderUseCase: DeleteOrderUseCase,
-    private val sseManager: SSEManager  // Necesitaremos crear este manager
+    private val orderRepository: OrderRepository,
+    private val webSocketManager: WebSocketManager
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow<CustomerOrderUIState>(CustomerOrderUIState.Loading)
@@ -34,24 +30,15 @@ class CustomerOrderViewModel @Inject constructor(
     private var currentCustomerId: Int = 0
 
     init {
-        // Iniciar conexión SSE cuando se crea el ViewModel
         viewModelScope.launch {
-            initializeSSE()
+            observeWebSocket()
         }
     }
 
-    private suspend fun initializeSSE() {
-        sseManager.connect(
-            onOrderUpdate = { updatedOrder ->
-                handleOrderUpdate(updatedOrder)
-            },
-            onOrderDeleted = { deletedOrderId ->
-                handleOrderDeleted(deletedOrderId)
-            },
-            onError = { error ->
-                handleError("Error en conexión SSE: $error")
-            }
-        )
+    private suspend fun observeWebSocket() {
+        webSocketManager.orderUpdates.collect { updatedOrder ->
+            handleOrderUpdate(updatedOrder)
+        }
     }
 
     fun loadOrders(customerId: Int) {
@@ -59,16 +46,18 @@ class CustomerOrderViewModel @Inject constructor(
         viewModelScope.launch {
             _uiState.update { CustomerOrderUIState.Loading }
             try {
-                val orders = getUserOrdersUseCase(customerId)
+                // El cliente ve las suyas Y las que están disponibles para pedir (userId = 0)
+                val allOrders = orderRepository.getAllOrders()
+                val myOrders = allOrders.filter { it.userId == customerId || it.userId == 0 }
+                
                 _uiState.update {
                     CustomerOrderUIState.Success(
-                        orders = orders,
-                        activeOrder = orders.firstOrNull { it.status != "delivered" && it.status != "cancelled" }
+                        orders = myOrders,
+                        activeOrder = myOrders.firstOrNull { it.userId == customerId && it.status != "delivered" && it.status != "cancelled" }
                     )
                 }
 
-                // Conectar SSE específico para este cliente
-                sseManager.connectToUser(customerId)
+                webSocketManager.connect(customerId)
 
             } catch (e: Exception) {
                 _uiState.update {
@@ -78,46 +67,24 @@ class CustomerOrderViewModel @Inject constructor(
         }
     }
 
-    fun createOrder(
-        customerId: Int,
-        title: String,
-        description: String,
-        establishmentName: String,
-        establishmentAddress: String,
-        price: Double
-    ) {
+    fun requestOrder(orderId: Int) {
         viewModelScope.launch {
             try {
-                val newOrder = createOrderUseCase(
-                    title = title,
-                    description = description,
-                    establishmentName = establishmentName,
-                    establishmentAddress = establishmentAddress,
-                    price = price,
-                    userId = customerId
-                )
-
+                // Al pedir una orden, actualizamos su estado para que nos pertenezca (userId)
+                // Usamos updateOrderStatus pero el backend asume el userId que le pasamos
+                orderRepository.updateOrderStatus(orderId, "pending", currentCustomerId)
+                
                 addNotification(
                     OrderNotification(
                         id = UUID.randomUUID().toString(),
-                        orderId = newOrder.id,
-                        message = "Pedido creado exitosamente",
+                        orderId = orderId,
+                        message = "Has pedido esta oferta correctamente",
                         type = NotificationType.ORDER_CREATED
                     )
                 )
-
-                // Recargar órdenes
-                loadOrders(customerId)
-
+                loadOrders(currentCustomerId)
             } catch (e: Exception) {
-                addNotification(
-                    OrderNotification(
-                        id = UUID.randomUUID().toString(),
-                        orderId = 0,
-                        message = "Error al crear pedido: ${e.message}",
-                        type = NotificationType.ORDER_UPDATED
-                    )
-                )
+                handleError("Error al pedir oferta: ${e.message}")
             }
         }
     }
@@ -125,24 +92,12 @@ class CustomerOrderViewModel @Inject constructor(
     fun cancelOrder(orderId: Int, customerId: Int) {
         viewModelScope.launch {
             try {
-                // En tu backend, cancelar una orden podría ser actualizar el estado a "cancelled"
-                updateOrderStatusUseCase(
+                orderRepository.updateOrderStatus(
                     orderId = orderId,
                     status = "cancelled",
                     userId = customerId
                 )
-
-                addNotification(
-                    OrderNotification(
-                        id = UUID.randomUUID().toString(),
-                        orderId = orderId,
-                        message = "Pedido cancelado",
-                        type = NotificationType.ORDER_CANCELLED
-                    )
-                )
-
                 loadOrders(customerId)
-
             } catch (e: Exception) {
                 handleError("Error al cancelar pedido: ${e.message}")
             }
@@ -157,72 +112,10 @@ class CustomerOrderViewModel @Inject constructor(
                         if (order.id == updatedOrder.id) updatedOrder else order
                     }
 
-                    // Añadir notificación según el nuevo estado
-                    val notificationMessage = when (updatedOrder.status) {
-                        "pickup" -> "Tu pedido está listo para recoger"
-                        "in_coming" -> "El repartidor está en camino"
-                        "arrived" -> "El repartidor ha llegado"
-                        "delivered" -> "¡Tu pedido ha sido entregado!"
-                        else -> null
-                    }
-
-                    notificationMessage?.let {
-                        addNotification(
-                            OrderNotification(
-                                id = UUID.randomUUID().toString(),
-                                orderId = updatedOrder.id,
-                                message = it,
-                                type = when (updatedOrder.status) {
-                                    "delivered" -> NotificationType.ORDER_DELIVERED
-                                    else -> NotificationType.ORDER_UPDATED
-                                }
-                            )
-                        )
-                    }
-
-                    // Si se asignó un repartidor
-                    if (updatedOrder.deliveryId != null &&
-                        currentState.orders.find { it.id == updatedOrder.id }?.deliveryId == null) {
-                        addNotification(
-                            OrderNotification(
-                                id = UUID.randomUUID().toString(),
-                                orderId = updatedOrder.id,
-                                message = "Se ha asignado un repartidor a tu pedido",
-                                type = NotificationType.DELIVERY_ASSIGNED
-                            )
-                        )
-                    }
-
+                    // Notificaciones por estado...
                     CustomerOrderUIState.Success(
                         orders = updatedOrders,
-                        activeOrder = updatedOrders.firstOrNull { it.status != "delivered" && it.status != "cancelled" },
-                        notifications = currentState.notifications
-                    )
-                } else {
-                    currentState
-                }
-            }
-        }
-    }
-
-    private fun handleOrderDeleted(deletedOrderId: Int) {
-        viewModelScope.launch {
-            _uiState.update { currentState ->
-                if (currentState is CustomerOrderUIState.Success) {
-                    val filteredOrders = currentState.orders.filter { it.id != deletedOrderId }
-
-                    addNotification(
-                        OrderNotification(
-                            id = UUID.randomUUID().toString(),
-                            orderId = deletedOrderId,
-                            message = "El pedido ha sido eliminado",
-                            type = NotificationType.ORDER_CANCELLED
-                        )
-                    )
-
-                    CustomerOrderUIState.Success(
-                        orders = filteredOrders,
-                        activeOrder = filteredOrders.firstOrNull { it.status != "delivered" && it.status != "cancelled" },
+                        activeOrder = updatedOrders.firstOrNull { it.userId == currentCustomerId && it.status != "delivered" && it.status != "cancelled" },
                         notifications = currentState.notifications
                     )
                 } else {
@@ -245,8 +138,6 @@ class CustomerOrderViewModel @Inject constructor(
                     currentState
                 }
             }
-
-            // Auto-dismiss después de 5 segundos
             delay(5000)
             dismissNotification(notification.id)
         }
@@ -268,20 +159,14 @@ class CustomerOrderViewModel @Inject constructor(
 
     private fun handleError(message: String) {
         viewModelScope.launch {
-            _uiState.update {
-                CustomerOrderUIState.Error(message)
-            }
-
-            // Auto-limpiar error después de 3 segundos
+            _uiState.update { CustomerOrderUIState.Error(message) }
             delay(3000)
-            currentCustomerId?.let { loadOrders(it) }
+            loadOrders(currentCustomerId)
         }
     }
 
     override fun onCleared() {
         super.onCleared()
-        viewModelScope.launch {
-            sseManager.disconnect()
-        }
+        webSocketManager.disconnect()
     }
 }

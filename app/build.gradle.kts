@@ -46,13 +46,16 @@ android {
     productFlavors {
         create("dev") {
             dimension = "environment"
-            buildConfigField("String", "BASE_URL", "\"http://10.0.2.2:8080/\"")
+            // Lee desde local.properties, si no existe usa el valor por defecto
+            val baseUrl = project.findProperty("BASE_URL_DEV")?.toString() ?: "\"http://10.0.2.2:8080/\""
+            buildConfigField("String", "BASE_URL", baseUrl)
             resValue("string", "app_name", "Demo (DEV)")
         }
 
         create("prod") {
             dimension = "environment"
-            buildConfigField("String", "BASE_URL", "\"https://tu-api-produccion.com/\"")
+            val baseUrl = project.findProperty("BASE_URL_PROD")?.toString() ?: "\"https://tu-api-produccion.com/\""
+            buildConfigField("String", "BASE_URL", baseUrl)
             resValue("string", "app_name", "Demo")
         }
     }

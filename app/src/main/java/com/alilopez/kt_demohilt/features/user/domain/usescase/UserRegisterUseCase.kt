@@ -11,13 +11,17 @@ class UserRegisterUseCase @Inject constructor(
         name: String,
         password: String,
         role: String = "customer",
-        address: String? = null
+        address: String? = null,
+        establishmentName: String? = null,
+        establishmentAddress: String? = null
     ): User {
         return repository.register(
             name = name,
             password = password,
             role = role,
-            address = address
+            address = address,
+            establishmentName = establishmentName,
+            establishmentAddress = establishmentAddress
         )
     }
 }

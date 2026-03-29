@@ -16,7 +16,7 @@ import javax.inject.Inject
 @HiltViewModel
 class RegisterViewModel @Inject constructor(
     private val userRegisterUseCase: UserRegisterUseCase,
-    private val authRepository: AuthRepository  // ✅ Añadido para autenticar después del registro
+    private val authRepository: AuthRepository
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(RegisterUIState())
@@ -30,6 +30,12 @@ class RegisterViewModel @Inject constructor(
 
     private val _address = MutableStateFlow("")
     val address: StateFlow<String> = _address.asStateFlow()
+
+    private val _establishmentName = MutableStateFlow("")
+    val establishmentName: StateFlow<String> = _establishmentName.asStateFlow()
+
+    private val _establishmentAddress = MutableStateFlow("")
+    val establishmentAddress: StateFlow<String> = _establishmentAddress.asStateFlow()
 
     private val _selectedRole = MutableStateFlow("customer")
     val selectedRole: StateFlow<String> = _selectedRole.asStateFlow()
@@ -46,6 +52,14 @@ class RegisterViewModel @Inject constructor(
         _address.value = address
     }
 
+    fun onEstablishmentNameChange(name: String) {
+        _establishmentName.value = name
+    }
+
+    fun onEstablishmentAddressChange(address: String) {
+        _establishmentAddress.value = address
+    }
+
     fun onRoleChange(role: String) {
         _selectedRole.value = role
     }
@@ -59,7 +73,9 @@ class RegisterViewModel @Inject constructor(
                     name = _name.value,
                     password = _password.value,
                     role = _selectedRole.value,
-                    address = if (_address.value.isNotBlank()) _address.value else null
+                    address = if (_address.value.isNotBlank()) _address.value else null,
+                    establishmentName = if (_selectedRole.value == "seller") _establishmentName.value else null,
+                    establishmentAddress = if (_selectedRole.value == "seller") _establishmentAddress.value else null
                 )
 
                 authRepository.setUserLoggedIn(user)
