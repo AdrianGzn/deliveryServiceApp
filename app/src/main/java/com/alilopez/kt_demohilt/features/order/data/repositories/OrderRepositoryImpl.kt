@@ -2,10 +2,10 @@ package com.alipoez.kt_demohilt.features.order.data.repositories
 
 import com.alilopez.kt_demohilt.features.order.data.datasources.remote.api.OrderApi
 import com.alilopez.kt_demohilt.features.order.domain.entities.Order
-import com.alipoez.kt_demohilt.features.order.data.datasources.remote.model.OrderAssignDTO
-import com.alipoez.kt_demohilt.features.order.data.datasources.remote.model.OrderItemRequestDTO
-import com.alipoez.kt_demohilt.features.order.data.datasources.remote.model.OrderRequestDTO
-import com.alipoez.kt_demohilt.features.order.data.datasources.remote.model.OrderStatusUpdateDTO
+import com.alilopez.kt_demohilt.features.order.data.datasources.remote.model.OrderAssignDTO
+import com.alilopez.kt_demohilt.features.order.data.datasources.remote.model.OrderItemRequestDTO
+import com.alilopez.kt_demohilt.features.order.data.datasources.remote.model.OrderRequestDTO
+import com.alilopez.kt_demohilt.features.order.data.datasources.remote.model.OrderStatusUpdateDTO
 import com.alipoez.kt_demohilt.features.order.data.datasources.remote.mapper.toDomain
 import com.alipoez.kt_demohilt.features.order.domain.repositories.OrderRepository
 import javax.inject.Inject
@@ -15,21 +15,11 @@ class OrderRepositoryImpl @Inject constructor(
 ) : OrderRepository {
 
     override suspend fun createOrder(
-        title: String,
-        description: String,
-        establishmentName: String,
-        establishmentAddress: String,
-        price: Double,
         userId: Int,
         sellerId: Int,
         items: List<OrderItemRequestDTO>
     ): Order {
         val request = OrderRequestDTO(
-            title = title,
-            description = description,
-            establishmentName = establishmentName,
-            establishmentAddress = establishmentAddress,
-            price = price,
             userId = userId,
             sellerId = sellerId,
             items = items

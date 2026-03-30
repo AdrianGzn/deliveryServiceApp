@@ -1,23 +1,8 @@
-package com.alipoez.kt_demohilt.features.order.data.datasources.remote.model
+package com.alilopez.kt_demohilt.features.order.data.datasources.remote.model
 
 import com.google.gson.annotations.SerializedName
 
 data class OrderRequestDTO(
-    @SerializedName("title")
-    val title: String,
-
-    @SerializedName("description")
-    val description: String,
-
-    @SerializedName("establishmentName")
-    val establishmentName: String,
-
-    @SerializedName("establishmentAddress")
-    val establishmentAddress: String,
-
-    @SerializedName("price")
-    val price: Double,
-
     @SerializedName("userId")
     val userId: Int,
 
@@ -25,7 +10,7 @@ data class OrderRequestDTO(
     val sellerId: Int,
 
     @SerializedName("items")
-    val items: List<OrderItemRequestDTO> = emptyList()
+    val items: List<OrderItemRequestDTO>
 )
 
 data class OrderItemRequestDTO(

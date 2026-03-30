@@ -22,7 +22,6 @@ import javax.inject.Inject
 class DeliveryOrderViewModel @Inject constructor(
     private val getAllOrdersUseCase: GetAllOrdersUseCase,
     private val getUserOrdersUseCase: GetUserOrdersUseCase,
-    private val getOrderByIdUseCase: GetOrderByIdUseCase,
     private val updateOrderStatusUseCase: UpdateOrderStatusUseCase,
     private val assignDeliveryUseCase: AssignDeliveryUseCase,
     private val webSocketManager: WebSocketManager
@@ -50,13 +49,11 @@ class DeliveryOrderViewModel @Inject constructor(
         viewModelScope.launch {
             _uiState.update { DeliveryOrderUIState.Loading }
             try {
-                // Cargar todas las órdenes pendientes (disponibles)
                 val allOrders = getAllOrdersUseCase()
                 val availableOrders = allOrders.filter {
                     it.status == "pending" && it.deliveryId == null
                 }
 
-                // Cargar órdenes asignadas a este repartidor
                 val myOrders = getUserOrdersUseCase(deliveryId)
                 val assignedOrders = myOrders.filter { it.deliveryId == deliveryId }
 
@@ -70,7 +67,6 @@ class DeliveryOrderViewModel @Inject constructor(
                     )
                 }
 
-                // Conectar WebSocket específico para este repartidor
                 webSocketManager.connect(deliveryId)
 
             } catch (e: Exception) {
@@ -84,7 +80,7 @@ class DeliveryOrderViewModel @Inject constructor(
     fun acceptOrder(orderId: Int, deliveryId: Int) {
         viewModelScope.launch {
             try {
-                val assignedOrder = assignDeliveryUseCase(
+                assignDeliveryUseCase(
                     orderId = orderId,
                     deliveryId = deliveryId
                 )
@@ -98,7 +94,6 @@ class DeliveryOrderViewModel @Inject constructor(
                     )
                 )
 
-                // Recargar datos
                 loadData(deliveryId)
 
             } catch (e: Exception) {
@@ -110,7 +105,7 @@ class DeliveryOrderViewModel @Inject constructor(
     fun updateOrderStatus(orderId: Int, newStatus: String, deliveryId: Int) {
         viewModelScope.launch {
             try {
-                val updatedOrder = updateOrderStatusUseCase(
+                updateOrderStatusUseCase(
                     orderId = orderId,
                     status = newStatus,
                     userId = deliveryId
@@ -132,7 +127,6 @@ class DeliveryOrderViewModel @Inject constructor(
                     )
                 )
 
-                // Recargar datos
                 loadData(deliveryId)
 
             } catch (e: Exception) {
@@ -146,9 +140,7 @@ class DeliveryOrderViewModel @Inject constructor(
             _uiState.update { currentState ->
                 if (currentState is DeliveryOrderUIState.Success) {
 
-                    // Actualizar lista de disponibles
                     val updatedAvailable = if (updatedOrder.status == "pending" && updatedOrder.deliveryId == null) {
-                        // Si la orden está pendiente y no tiene repartidor, actualizar o agregar a disponibles
                         val exists = currentState.availableOrders.any { it.id == updatedOrder.id }
                         if (exists) {
                             currentState.availableOrders.map {
@@ -158,13 +150,10 @@ class DeliveryOrderViewModel @Inject constructor(
                             currentState.availableOrders + updatedOrder
                         }
                     } else {
-                        // Si ya no está disponible, quitarla de disponibles
                         currentState.availableOrders.filter { it.id != updatedOrder.id }
                     }
 
-                    // Actualizar lista de asignados
                     val updatedAssigned = if (updatedOrder.deliveryId == currentDeliveryId) {
-                        // Si esta orden es para este repartidor
                         val exists = currentState.myAssignedOrders.any { it.id == updatedOrder.id }
                         if (exists) {
                             currentState.myAssignedOrders.map {
@@ -174,15 +163,13 @@ class DeliveryOrderViewModel @Inject constructor(
                             currentState.myAssignedOrders + updatedOrder
                         }
                     } else {
-                        // Si no es para este repartidor, quitarla de asignados
                         currentState.myAssignedOrders.filter { it.id != updatedOrder.id }
                     }
 
-                    // Notificar si hay cambios relevantes
                     if (updatedOrder.deliveryId == currentDeliveryId) {
                         val notificationMessage = when (updatedOrder.status) {
                             "pickup" -> "Nuevo pedido asignado: ${updatedOrder.title}"
-                            else -> "Pedido #${updatedOrder.id} actualizado a ${updatedOrder.status}"
+                            else -> "Pedido #${updatedOrder.id} actualizado a ${updatedOrder.statusDisplay}"
                         }
 
                         addNotification(

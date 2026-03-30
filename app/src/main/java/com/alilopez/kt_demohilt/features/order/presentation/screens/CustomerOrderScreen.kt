@@ -3,127 +3,95 @@ package com.alilopez.kt_demohilt.features.order.presentation.screens
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.alilopez.kt_demohilt.features.order.domain.entities.Order
+import com.alilopez.kt_demohilt.features.order.presentation.viewmodels.CustomerOrderViewModel
 import com.alipoez.kt_demohilt.features.order.presentation.states.CustomerOrderUIState
-import com.alipoez.kt_demohilt.features.order.presentation.viewmodels.CustomerOrderViewModel
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CustomerOrderScreen(
-    viewModel: CustomerOrderViewModel = hiltViewModel(),
-    customerId: Int
+    customerId: Int,
+    viewModel: CustomerOrderViewModel = hiltViewModel()
 ) {
-    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val uiState by viewModel.uiState.collectAsState()
 
     LaunchedEffect(customerId) {
         viewModel.loadOrders(customerId)
     }
 
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-    ) {
-        when (val state = uiState) {
-            is CustomerOrderUIState.Loading -> {
-                CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
-            }
-
-            is CustomerOrderUIState.Success -> {
-                CustomerOrderMarketplaceContent(
-                    state = state,
-                    currentCustomerId = customerId,
-                    onRequestOrder = { viewModel.requestOrder(it) },
-                    onCancelOrder = { viewModel.cancelOrder(it, customerId) }
-                )
-            }
-
-            is CustomerOrderUIState.Error -> {
-                Text(state.message, color = Color.Red, modifier = Modifier.align(Alignment.Center))
-            }
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text("Mis Pedidos") }
+            )
         }
-    }
-}
-
-@Composable
-fun CustomerOrderMarketplaceContent(
-    state: CustomerOrderUIState.Success,
-    currentCustomerId: Int,
-    onRequestOrder: (Int) -> Unit,
-    onCancelOrder: (Int) -> Unit
-) {
-    if (state.orders.isEmpty()) {
-        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-            Text("No hay ofertas de vendedores disponibles.")
-        }
-    } else {
-        LazyColumn(
-            modifier = Modifier.fillMaxSize(),
-            contentPadding = PaddingValues(16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+    ) { paddingValues ->
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues)
         ) {
-            items(state.orders) { order ->
-                CustomerMarketplaceCard(
-                    order = order,
-                    isMyOrder = order.userId == currentCustomerId,
-                    onRequest = { onRequestOrder(order.id) },
-                    onCancel = { onCancelOrder(order.id) }
-                )
-            }
-        }
-    }
-}
-
-@Composable
-fun CustomerMarketplaceCard(
-    order: Order,
-    isMyOrder: Boolean,
-    onRequest: () -> Unit,
-    onCancel: () -> Unit
-) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = if (isMyOrder) MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.2f) else MaterialTheme.colorScheme.surface
-        )
-    ) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Text(order.title, fontWeight = FontWeight.Bold, fontSize = 18.sp)
-                CustomerStatusChip(status = order.status)
-            }
-
-            Text(order.description, color = Color.Gray)
-            Text("$${order.price}", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
-            
-            Text("Vendedor: ${order.establishmentName}", fontSize = 12.sp, fontWeight = FontWeight.Medium)
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-            if (!isMyOrder && order.userId == 0) {
-                Button(onClick = onRequest, modifier = Modifier.fillMaxWidth()) {
-                    Text("¡Lo quiero! (Pedir)")
+            when (uiState) {
+                is CustomerOrderUIState.Loading -> {
+                    CircularProgressIndicator(
+                        modifier = Modifier.align(Alignment.Center)
+                    )
                 }
-            } else if (isMyOrder) {
-                Text("Este es tu pedido actual", color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold, fontSize = 12.sp)
-                if (order.status == "pending") {
-                    OutlinedButton(onClick = onCancel, modifier = Modifier.fillMaxWidth()) {
-                        Text("Cancelar mi pedido")
+                is CustomerOrderUIState.Success -> {
+                    val state = uiState as CustomerOrderUIState.Success
+                    Column {
+                        state.notifications.forEach { notification ->
+                            Card(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(8.dp),
+                                colors = CardDefaults.cardColors(
+                                    containerColor = MaterialTheme.colorScheme.primaryContainer
+                                )
+                            ) {
+                                Text(
+                                    text = notification.message,
+                                    modifier = Modifier.padding(16.dp)
+                                )
+                            }
+                        }
+
+                        LazyColumn(
+                            contentPadding = PaddingValues(16.dp),
+                            verticalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            items(state.orders) { order ->
+                                OrderCard(
+                                    order = order,
+                                    onCancelOrder = {
+                                        viewModel.cancelOrder(order.id, customerId)
+                                    }
+                                )
+                            }
+                        }
+                    }
+                }
+                is CustomerOrderUIState.Error -> {
+                    val state = uiState as CustomerOrderUIState.Error
+                    Column(
+                        modifier = Modifier.fillMaxSize(),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.Center
+                    ) {
+                        Text(
+                            text = state.message,
+                            color = MaterialTheme.colorScheme.error
+                        )
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Button(onClick = { viewModel.loadOrders(customerId) }) {
+                            Text("Reintentar")
+                        }
                     }
                 }
             }
@@ -132,18 +100,77 @@ fun CustomerMarketplaceCard(
 }
 
 @Composable
-fun CustomerStatusChip(status: String) {
-    val text = when(status) {
-        "pending" -> "Pendiente"
-        "pickup" -> "Preparado"
-        "in_coming" -> "En camino"
-        "delivered" -> "Entregado"
-        else -> status
-    }
-    Surface(
-        color = MaterialTheme.colorScheme.secondaryContainer,
-        shape = RoundedCornerShape(4.dp)
+fun OrderCard(
+    order: Order,
+    onCancelOrder: () -> Unit
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceVariant
+        )
     ) {
-        Text(text, modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp), fontSize = 10.sp)
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp)
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Text(
+                    text = order.title,
+                    style = MaterialTheme.typography.titleMedium
+                )
+                Text(
+                    text = "$${order.price}",
+                    style = MaterialTheme.typography.bodyMedium
+                )
+            }
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            Text(
+                text = order.description,
+                style = MaterialTheme.typography.bodyMedium
+            )
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Surface(
+                    color = when (order.status) {
+                        "pending" -> MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f)
+                        "pickup" -> MaterialTheme.colorScheme.primaryContainer
+                        "in_coming" -> MaterialTheme.colorScheme.secondaryContainer
+                        "arrived" -> MaterialTheme.colorScheme.tertiaryContainer
+                        "delivered" -> MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.5f)
+                        else -> MaterialTheme.colorScheme.surfaceVariant
+                    },
+                    shape = MaterialTheme.shapes.small
+                ) {
+                    Text(
+                        text = order.statusDisplay,
+                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                        style = MaterialTheme.typography.labelSmall
+                    )
+                }
+
+                if (order.status == "pending" && order.userId != 0) {
+                    Button(
+                        onClick = onCancelOrder,
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = MaterialTheme.colorScheme.error
+                        )
+                    ) {
+                        Text("Cancelar")
+                    }
+                }
+            }
+        }
     }
 }

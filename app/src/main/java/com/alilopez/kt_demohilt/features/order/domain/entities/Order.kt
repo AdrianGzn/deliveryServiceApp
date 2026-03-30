@@ -5,8 +5,6 @@ data class Order(
     val title: String,
     val description: String,
     val status: String,
-    val establishmentName: String,
-    val establishmentAddress: String,
     val price: Double,
     val userId: Int,
     val sellerId: Int,

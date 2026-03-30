@@ -1,4 +1,4 @@
-package com.alipoez.kt_demohilt.features.order.data.datasources.remote.model
+package com.alilopez.kt_demohilt.features.order.data.datasources.remote.model
 
 import com.google.gson.annotations.SerializedName
 

@@ -1,4 +1,4 @@
-package com.alipoez.kt_demohilt.features.order.presentation.viewmodels
+package com.alilopez.kt_demohilt.features.order.presentation.viewmodels
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -46,14 +46,12 @@ class CustomerOrderViewModel @Inject constructor(
         viewModelScope.launch {
             _uiState.update { CustomerOrderUIState.Loading }
             try {
-                // El cliente ve las suyas Y las que están disponibles para pedir (userId = 0)
-                val allOrders = orderRepository.getAllOrders()
-                val myOrders = allOrders.filter { it.userId == customerId || it.userId == 0 }
-                
+                val myOrders = orderRepository.getUserOrders(customerId)
+
                 _uiState.update {
                     CustomerOrderUIState.Success(
                         orders = myOrders,
-                        activeOrder = myOrders.firstOrNull { it.userId == customerId && it.status != "delivered" && it.status != "cancelled" }
+                        activeOrder = myOrders.firstOrNull { it.status != "delivered" && it.status != "cancelled" }
                     )
                 }
 
@@ -63,28 +61,6 @@ class CustomerOrderViewModel @Inject constructor(
                 _uiState.update {
                     CustomerOrderUIState.Error("Error al cargar pedidos: ${e.message}")
                 }
-            }
-        }
-    }
-
-    fun requestOrder(orderId: Int) {
-        viewModelScope.launch {
-            try {
-                // Al pedir una orden, actualizamos su estado para que nos pertenezca (userId)
-                // Usamos updateOrderStatus pero el backend asume el userId que le pasamos
-                orderRepository.updateOrderStatus(orderId, "pending", currentCustomerId)
-                
-                addNotification(
-                    OrderNotification(
-                        id = UUID.randomUUID().toString(),
-                        orderId = orderId,
-                        message = "Has pedido esta oferta correctamente",
-                        type = NotificationType.ORDER_CREATED
-                    )
-                )
-                loadOrders(currentCustomerId)
-            } catch (e: Exception) {
-                handleError("Error al pedir oferta: ${e.message}")
             }
         }
     }
@@ -112,7 +88,6 @@ class CustomerOrderViewModel @Inject constructor(
                         if (order.id == updatedOrder.id) updatedOrder else order
                     }
 
-                    // Notificaciones por estado...
                     CustomerOrderUIState.Success(
                         orders = updatedOrders,
                         activeOrder = updatedOrders.firstOrNull { it.userId == currentCustomerId && it.status != "delivered" && it.status != "cancelled" },

@@ -1,4 +1,4 @@
-package com.alipoez.kt_demohilt.features.order.data.datasources.remote.model
+package com.alilopez.kt_demohilt.features.order.data.datasources.remote.model
 
 import com.google.gson.annotations.SerializedName
 
@@ -14,12 +14,6 @@ data class OrderResponseDTO(
 
     @SerializedName("status")
     val status: String,
-
-    @SerializedName("establishmentName")
-    val establishmentName: String?, // Cambiado a nullable
-
-    @SerializedName("establishmentAddress")
-    val establishmentAddress: String?, // Cambiado a nullable
 
     @SerializedName("price")
     val price: Double,
