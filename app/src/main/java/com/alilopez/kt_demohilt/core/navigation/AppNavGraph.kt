@@ -10,6 +10,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import com.alilopez.kt_demohilt.core.navigation.routes.Screen
 import com.alilopez.kt_demohilt.features.auth.presentation.AuthViewModel
+import com.alilopez.kt_demohilt.features.food.presentation.screens.MarketplaceScreen
 import com.alilopez.kt_demohilt.features.food.presentation.screens.SellerHomeScreen
 import com.alilopez.kt_demohilt.features.order.presentation.screens.CustomerOrderScreen
 import com.alilopez.kt_demohilt.features.order.presentation.screens.DeliveryOrderScreen
@@ -101,25 +102,37 @@ fun AppNavGraph(
             )
         }
 
-        // Pantalla principal de cliente
+        // Marketplace para el Cliente
         composable(route = Screen.CustomerHome.route) {
-            CustomerOrderScreen(
-                customerId = userId ?: 0
-            )
+            userId?.let { id ->
+                MarketplaceScreen(
+                    userId = id,
+                    onNavigateToMyOrders = {
+                        navController.navigate(Screen.MyOrders.route)
+                    }
+                )
+            }
+        }
+
+        // Pantalla de pedidos del cliente
+        composable(route = Screen.MyOrders.route) {
+            userId?.let { id ->
+                CustomerOrderScreen(customerId = id)
+            }
         }
 
         // Pantalla principal de repartidor
         composable(route = Screen.DeliveryHome.route) {
-            DeliveryOrderScreen(
-                deliveryId = userId ?: 0
-            )
+            userId?.let { id ->
+                DeliveryOrderScreen(deliveryId = id)
+            }
         }
 
         // Pantalla principal de vendedor
         composable(route = Screen.SellerHome.route) {
-            SellerHomeScreen(
-                sellerId = userId ?: 0
-            )
+            userId?.let { id ->
+                SellerHomeScreen(sellerId = id)
+            }
         }
     }
 }

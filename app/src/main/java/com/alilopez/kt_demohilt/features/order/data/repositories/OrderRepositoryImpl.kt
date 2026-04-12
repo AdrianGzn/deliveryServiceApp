@@ -36,8 +36,10 @@ class OrderRepositoryImpl @Inject constructor(
 
     override suspend fun getUserOrders(userId: Int): List<Order> {
         val response = orderApi.getUserOrders(userId)
-        // Manejar el caso en que response sea null, devolviendo una lista vacía
-        return response?.map { it.toDomain() } ?: emptyList()
+        if (response.isSuccessful) {
+            return response.body()?.map { it.toDomain() } ?: emptyList()
+        }
+        return emptyList()
     }
 
     override suspend fun getOrderById(orderId: Int): Order {

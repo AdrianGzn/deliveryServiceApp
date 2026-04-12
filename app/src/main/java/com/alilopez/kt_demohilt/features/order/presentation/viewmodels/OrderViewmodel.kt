@@ -67,8 +67,12 @@ class OrderViewmodel @Inject constructor(
             _isLoading.value = true
             try {
                 val response = orderApi.getUserOrders(userId)
-                val orders = response?.map { it.toDomain() } ?: emptyList()
-                _orders.value = orders
+                if (response.isSuccessful) {
+                    val orders = response.body()?.map { it.toDomain() } ?: emptyList()
+                    _orders.value = orders
+                } else {
+                    _orders.value = emptyList()
+                }
             } catch (e: Exception) {
                 e.printStackTrace()
                 _orders.value = emptyList()

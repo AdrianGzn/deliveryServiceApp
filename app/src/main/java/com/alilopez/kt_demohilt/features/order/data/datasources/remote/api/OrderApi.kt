@@ -18,7 +18,7 @@ interface OrderApi {
     suspend fun getAllOrders(): List<OrderResponseDTO>
 
     @GET("api/orders/user/{userId}")
-    suspend fun getUserOrders(@Path("userId") userId: Int): List<OrderResponseDTO>?
+    suspend fun getUserOrders(@Path("userId") userId: Int): Response<List<OrderResponseDTO>>
 
     @GET("api/orders/{id}")
     suspend fun getOrderById(@Path("id") orderId: Int): OrderDetailResponseDTO

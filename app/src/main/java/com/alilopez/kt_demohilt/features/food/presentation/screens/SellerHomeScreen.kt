@@ -20,6 +20,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.alilopez.kt_demohilt.features.order.domain.entities.Order
 import com.alilopez.kt_demohilt.features.food.presentation.states.SellerHomeUIState
 import com.alilopez.kt_demohilt.features.food.presentation.viewmodels.SellerViewModel
+import java.util.Locale
 
 @Composable
 fun SellerHomeScreen(
@@ -31,7 +32,7 @@ fun SellerHomeScreen(
     var showAddDialog by remember { mutableStateOf(false) }
 
     LaunchedEffect(sellerId) {
-        viewModel.loadOrders(sellerId)
+        viewModel.loadData(sellerId)
     }
 
     Box(modifier = modifier.fillMaxSize()) {
@@ -46,7 +47,7 @@ fun SellerHomeScreen(
                 ) {
                     Text(state.message, color = Color.Red)
                     Spacer(modifier = Modifier.height(16.dp))
-                    Button(onClick = { viewModel.loadOrders(sellerId) }) {
+                    Button(onClick = { viewModel.loadData(sellerId) }) {
                         Text("Reintentar")
                     }
                 }
@@ -58,8 +59,8 @@ fun SellerHomeScreen(
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Text("Mis Productos", style = MaterialTheme.typography.headlineSmall)
-                        IconButton(onClick = { viewModel.loadOrders(sellerId) }) {
+                        Text("Órdenes de Clientes", style = MaterialTheme.typography.headlineSmall)
+                        IconButton(onClick = { viewModel.loadData(sellerId) }) {
                             Icon(Icons.Default.Refresh, contentDescription = "Refrescar")
                         }
                     }
@@ -72,7 +73,7 @@ fun SellerHomeScreen(
                             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                                 Text("No tienes órdenes aún")
                                 Text(
-                                    text = "Toca el botón + para publicar un producto",
+                                    text = "Los clientes verán tus productos en el Marketplace",
                                     fontSize = 14.sp,
                                     color = Color.Gray
                                 )
@@ -110,7 +111,7 @@ fun SellerHomeScreen(
         AddProductDialog(
             onDismiss = { showAddDialog = false },
             onConfirm = { foodName, price ->
-                viewModel.createOrder(foodName, price)
+                viewModel.createProduct(foodName, price)
                 showAddDialog = false
             }
         )
@@ -149,8 +150,9 @@ fun SellerOrderCard(
 
             Spacer(modifier = Modifier.height(8.dp))
 
+            val formattedPrice = String.format(Locale.getDefault(), "%.2f", order.price)
             Text(
-                text = "$${String.format("%.2f", order.price)}",
+                text = "$$formattedPrice",
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.primary,
                 fontSize = 16.sp

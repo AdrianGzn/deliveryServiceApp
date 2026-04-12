@@ -6,7 +6,6 @@ import com.alilopez.kt_demohilt.core.managers.WebSocketManager
 import com.alilopez.kt_demohilt.features.food.presentation.states.SellerHomeUIState
 import com.alilopez.kt_demohilt.features.food.domain.repositories.FoodRepository
 import com.alilopez.kt_demohilt.features.food.domain.entities.Food
-import com.alilopez.kt_demohilt.features.order.data.datasources.remote.model.OrderItemRequestDTO
 import com.alilopez.kt_demohilt.features.order.domain.repositories.OrderRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -35,42 +34,41 @@ class SellerViewModel @Inject constructor(
     private fun observeWebSocket() {
         viewModelScope.launch {
             webSocketManager.orderUpdates.collect { updatedOrder ->
+                // Si llega una actualización de orden para este vendedor, refrescamos la lista de órdenes
                 if (updatedOrder.sellerId == currentSellerId) {
-                    loadOrders(currentSellerId)
+                    loadData(currentSellerId)
                 }
             }
         }
     }
 
-    fun loadOrders(sellerId: Int) {
+    fun loadData(sellerId: Int) {
         currentSellerId = sellerId
         viewModelScope.launch {
             _uiState.update { SellerHomeUIState.Loading }
             try {
+                // Según el back: El vendedor ve sus órdenes filtrando la lista general
                 val allOrders = orderRepository.getAllOrders()
-                val sellerOrders = allOrders.filter { it.sellerId == sellerId }
+                val sellerOrders = allOrders.filter { it.sellerId == sellerId && it.userId != 0 }
+                
                 _uiState.update { SellerHomeUIState.Success(orders = sellerOrders) }
+                
+                // Conectamos el WebSocket del vendedor para recibir actualizaciones de sus pedidos
+                webSocketManager.connect(sellerId)
             } catch (e: Exception) {
-                _uiState.update { SellerHomeUIState.Error(e.message ?: "Error al cargar órdenes") }
+                _uiState.update { SellerHomeUIState.Error(e.message ?: "Error al cargar datos") }
             }
         }
     }
 
-    fun createOrder(foodName: String, foodPrice: Double) {
+    fun createProduct(foodName: String, foodPrice: Double) {
         viewModelScope.launch {
             try {
-                val newFood = foodRepository.createFood(
+                foodRepository.createFood(
                     Food(id = 0, sellerId = currentSellerId, name = foodName, price = foodPrice)
                 )
-
-                val items = listOf(OrderItemRequestDTO(foodId = newFood.id, quantity = 1))
-
-                orderRepository.createOrder(
-                    userId = 0,
-                    sellerId = currentSellerId,
-                    items = items
-                )
-                loadOrders(currentSellerId)
+                // Después de crear un producto, refrescamos los datos
+                loadData(currentSellerId)
             } catch (e: Exception) {
                 handleError(e)
             }
@@ -81,7 +79,7 @@ class SellerViewModel @Inject constructor(
         viewModelScope.launch {
             try {
                 orderRepository.updateOrderStatus(orderId, newStatus, currentSellerId)
-                loadOrders(currentSellerId)
+                loadData(currentSellerId)
             } catch (e: Exception) {
                 handleError(e)
             }
