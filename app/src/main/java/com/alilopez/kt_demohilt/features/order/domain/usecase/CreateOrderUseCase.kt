@@ -1,8 +1,8 @@
-package com.alipoez.kt_demohilt.features.order.domain.usecase
+package com.alilopez.kt_demohilt.features.order.domain.usecase
 
 import com.alilopez.kt_demohilt.features.order.data.datasources.remote.model.OrderItemRequestDTO
 import com.alilopez.kt_demohilt.features.order.domain.entities.Order
-import com.alipoez.kt_demohilt.features.order.domain.repositories.OrderRepository
+import com.alilopez.kt_demohilt.features.order.domain.repositories.OrderRepository
 import javax.inject.Inject
 
 class CreateOrderUseCase @Inject constructor(

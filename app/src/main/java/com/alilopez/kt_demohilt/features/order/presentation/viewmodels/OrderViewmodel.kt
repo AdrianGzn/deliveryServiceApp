@@ -3,11 +3,11 @@ package com.alilopez.kt_demohilt.features.order.presentation.viewmodels
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.alilopez.kt_demohilt.features.order.data.datasources.remote.api.OrderApi
+import com.alilopez.kt_demohilt.features.order.data.datasources.remote.mapper.toDomain
 import com.alilopez.kt_demohilt.features.order.data.datasources.remote.model.OrderItemRequestDTO
 import com.alilopez.kt_demohilt.features.order.data.datasources.remote.model.OrderRequestDTO
 import com.alilopez.kt_demohilt.features.order.data.datasources.remote.model.OrderStatusUpdateDTO
 import com.alilopez.kt_demohilt.features.order.domain.entities.Order
-import com.alipoez.kt_demohilt.features.order.data.datasources.remote.mapper.toDomain
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -41,7 +41,7 @@ class OrderViewmodel @Inject constructor(
                 val newOrder = response.toDomain()
                 _orders.update { currentOrders -> currentOrders + newOrder }
             } catch (e: Exception) {
-                // Manejar error
+                e.printStackTrace()
             } finally {
                 _isLoading.value = false
             }
@@ -57,7 +57,7 @@ class OrderViewmodel @Inject constructor(
                     orders.map { if (it.id == orderId) updatedOrder.toDomain() else it }
                 }
             } catch (e: Exception) {
-                // Manejar error
+                e.printStackTrace()
             }
         }
     }
@@ -66,10 +66,12 @@ class OrderViewmodel @Inject constructor(
         viewModelScope.launch {
             _isLoading.value = true
             try {
-                val orders = orderApi.getUserOrders(userId).map { it.toDomain() }
+                val response = orderApi.getUserOrders(userId)
+                val orders = response?.map { it.toDomain() } ?: emptyList()
                 _orders.value = orders
             } catch (e: Exception) {
-                // Manejar error
+                e.printStackTrace()
+                _orders.value = emptyList()
             } finally {
                 _isLoading.value = false
             }
@@ -83,7 +85,7 @@ class OrderViewmodel @Inject constructor(
                 val orders = orderApi.getAllOrders().map { it.toDomain() }
                 _orders.value = orders
             } catch (e: Exception) {
-                // Manejar error
+                e.printStackTrace()
             } finally {
                 _isLoading.value = false
             }

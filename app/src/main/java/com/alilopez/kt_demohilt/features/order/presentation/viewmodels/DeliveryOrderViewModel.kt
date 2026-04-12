@@ -4,10 +4,13 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.alilopez.kt_demohilt.core.managers.WebSocketManager
 import com.alilopez.kt_demohilt.features.order.domain.entities.Order
-import com.alipoez.kt_demohilt.features.order.domain.usecase.*
-import com.alipoez.kt_demohilt.features.order.presentation.states.DeliveryOrderUIState
-import com.alipoez.kt_demohilt.features.order.presentation.states.NotificationType
-import com.alipoez.kt_demohilt.features.order.presentation.states.OrderNotification
+import com.alilopez.kt_demohilt.features.order.domain.usecase.AssignDeliveryUseCase
+import com.alilopez.kt_demohilt.features.order.domain.usecase.GetAllOrdersUseCase
+import com.alilopez.kt_demohilt.features.order.domain.usecase.GetUserOrdersUseCase
+import com.alilopez.kt_demohilt.features.order.domain.usecase.UpdateOrderStatusUseCase
+import com.alilopez.kt_demohilt.features.order.presentation.status.DeliveryOrderUIState
+import com.alilopez.kt_demohilt.features.order.presentation.status.NotificationType
+import com.alilopez.kt_demohilt.features.order.presentation.status.OrderNotification
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow

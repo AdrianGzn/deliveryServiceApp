@@ -10,8 +10,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.alilopez.kt_demohilt.features.order.domain.entities.Order
+import com.alilopez.kt_demohilt.features.order.presentation.status.CustomerOrderUIState
 import com.alilopez.kt_demohilt.features.order.presentation.viewmodels.CustomerOrderViewModel
-import com.alipoez.kt_demohilt.features.order.presentation.states.CustomerOrderUIState
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

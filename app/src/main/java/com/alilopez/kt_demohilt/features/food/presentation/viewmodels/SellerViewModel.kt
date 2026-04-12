@@ -3,12 +3,11 @@ package com.alilopez.kt_demohilt.features.food.presentation.viewmodels
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.alilopez.kt_demohilt.core.managers.WebSocketManager
-import com.alilopez.kt_demohilt.features.order.domain.entities.Order
-import com.alipoez.kt_demohilt.features.order.domain.repositories.OrderRepository
 import com.alilopez.kt_demohilt.features.food.presentation.states.SellerHomeUIState
-import com.alipoez.kt_demohilt.features.order.data.datasources.remote.model.OrderItemRequestDTO
 import com.alilopez.kt_demohilt.features.food.domain.repositories.FoodRepository
 import com.alilopez.kt_demohilt.features.food.domain.entities.Food
+import com.alilopez.kt_demohilt.features.order.data.datasources.remote.model.OrderItemRequestDTO
+import com.alilopez.kt_demohilt.features.order.domain.repositories.OrderRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -48,7 +47,6 @@ class SellerViewModel @Inject constructor(
         viewModelScope.launch {
             _uiState.update { SellerHomeUIState.Loading }
             try {
-                // Obtenemos todas y filtraremos por nuestro sellerId (según README punto 5)
                 val allOrders = orderRepository.getAllOrders()
                 val sellerOrders = allOrders.filter { it.sellerId == sellerId }
                 _uiState.update { SellerHomeUIState.Success(orders = sellerOrders) }
@@ -58,23 +56,16 @@ class SellerViewModel @Inject constructor(
         }
     }
 
-    fun createOrder(title: String, description: String, price: Double) {
+    fun createOrder(foodName: String, foodPrice: Double) {
         viewModelScope.launch {
             try {
-                // 1. Primero creamos el alimento en el catálogo para obtener un ID válido
                 val newFood = foodRepository.createFood(
-                    Food(id = 0, sellerId = currentSellerId, name = title, price = price)
+                    Food(id = 0, sellerId = currentSellerId, name = foodName, price = foodPrice)
                 )
-                
-                // 2. Ahora creamos la orden usando el ID real del alimento creado
+
                 val items = listOf(OrderItemRequestDTO(foodId = newFood.id, quantity = 1))
-                
+
                 orderRepository.createOrder(
-                    title = title,
-                    description = description,
-                    establishmentName = "Mi Tienda",
-                    establishmentAddress = "Dirección Tienda",
-                    price = price,
                     userId = 0,
                     sellerId = currentSellerId,
                     items = items
@@ -101,6 +92,8 @@ class SellerViewModel @Inject constructor(
         val currentState = _uiState.value
         if (currentState is SellerHomeUIState.Success) {
             _uiState.update { currentState.copy(errorMessage = e.message) }
+        } else {
+            _uiState.update { SellerHomeUIState.Error(e.message ?: "Error desconocido") }
         }
     }
 }

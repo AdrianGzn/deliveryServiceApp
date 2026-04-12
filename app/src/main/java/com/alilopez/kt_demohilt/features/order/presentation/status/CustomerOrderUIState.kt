@@ -1,4 +1,4 @@
-package com.alipoez.kt_demohilt.features.order.presentation.states
+package com.alilopez.kt_demohilt.features.order.presentation.status
 
 import com.alilopez.kt_demohilt.features.order.domain.entities.Order
 

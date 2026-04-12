@@ -1,6 +1,6 @@
-package com.alipoez.kt_demohilt.features.order.domain.usecase
+package com.alilopez.kt_demohilt.features.order.domain.usecase
 
-import com.alipoez.kt_demohilt.features.order.domain.repositories.OrderRepository
+import com.alilopez.kt_demohilt.features.order.domain.repositories.OrderRepository
 import javax.inject.Inject
 
 class DeleteOrderUseCase @Inject constructor(

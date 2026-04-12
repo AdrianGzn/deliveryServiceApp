@@ -1,15 +1,14 @@
-package com.alipoez.kt_demohilt.features.order.domain.repositories
+package com.alilopez.kt_demohilt.features.order.domain.repositories
 
 import com.alilopez.kt_demohilt.features.order.data.datasources.remote.model.OrderItemRequestDTO
 import com.alilopez.kt_demohilt.features.order.domain.entities.Order
-
 
 interface OrderRepository {
 
     suspend fun createOrder(
         userId: Int,
         sellerId: Int,
-        items: List<OrderItemRequestDTO> = emptyList()
+        items: List<OrderItemRequestDTO>
     ): Order
 
     suspend fun getAllOrders(): List<Order>

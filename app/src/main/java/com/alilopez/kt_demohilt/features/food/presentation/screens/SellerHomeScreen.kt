@@ -40,7 +40,16 @@ fun SellerHomeScreen(
                 CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
             }
             is SellerHomeUIState.Error -> {
-                Text(state.message, color = Color.Red, modifier = Modifier.align(Alignment.Center))
+                Column(
+                    modifier = Modifier.align(Alignment.Center),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Text(state.message, color = Color.Red)
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Button(onClick = { viewModel.loadOrders(sellerId) }) {
+                        Text("Reintentar")
+                    }
+                }
             }
             is SellerHomeUIState.Success -> {
                 Column(modifier = Modifier.fillMaxSize()) {
@@ -49,15 +58,25 @@ fun SellerHomeScreen(
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Text("mis productos", style = MaterialTheme.typography.headlineSmall)
+                        Text("Mis Productos", style = MaterialTheme.typography.headlineSmall)
                         IconButton(onClick = { viewModel.loadOrders(sellerId) }) {
                             Icon(Icons.Default.Refresh, contentDescription = "Refrescar")
                         }
                     }
 
                     if (state.orders.isEmpty()) {
-                        Box(modifier = Modifier.weight(1f).fillMaxWidth(), contentAlignment = Alignment.Center) {
-                            Text("No has publicado ofertas aún")
+                        Box(
+                            modifier = Modifier.weight(1f).fillMaxWidth(),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                Text("No tienes órdenes aún")
+                                Text(
+                                    text = "Toca el botón + para publicar un producto",
+                                    fontSize = 14.sp,
+                                    color = Color.Gray
+                                )
+                            }
                         }
                     } else {
                         LazyColumn(
@@ -83,15 +102,15 @@ fun SellerHomeScreen(
             onClick = { showAddDialog = true },
             modifier = Modifier.align(Alignment.BottomEnd).padding(24.dp)
         ) {
-            Icon(Icons.Default.Add, contentDescription = "Publicar Combo")
+            Icon(Icons.Default.Add, contentDescription = "Publicar Producto")
         }
     }
 
     if (showAddDialog) {
-        AddOrderDialog(
+        AddProductDialog(
             onDismiss = { showAddDialog = false },
-            onConfirm = { title, desc, price ->
-                viewModel.createOrder(title, desc, price)
+            onConfirm = { foodName, price ->
+                viewModel.createOrder(foodName, price)
                 showAddDialog = false
             }
         )
@@ -112,28 +131,81 @@ fun SellerOrderCard(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                Text(order.title, fontWeight = FontWeight.Bold, fontSize = 18.sp)
+                Text(
+                    text = order.title,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 18.sp
+                )
                 StatusBadge(order.status)
             }
-            
-            Text(order.description, color = Color.Gray, fontSize = 14.sp)
-            Text("$${order.price}", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
-            
-            if (order.userId != 0) {
-                Text("Pedido por Cliente ID: ${order.userId}", fontSize = 12.sp, color = Color.Blue)
-            }
+
+            Spacer(modifier = Modifier.height(4.dp))
+
+            Text(
+                text = order.description,
+                color = Color.Gray,
+                fontSize = 14.sp
+            )
 
             Spacer(modifier = Modifier.height(8.dp))
-            
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                if (order.status == "pending") {
-                    Button(onClick = { onUpdateStatus("pickup") }) {
-                        Text("Listo para Recoger")
+
+            Text(
+                text = "$${String.format("%.2f", order.price)}",
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.primary,
+                fontSize = 16.sp
+            )
+
+            if (order.userId != 0) {
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    text = "Cliente ID: ${order.userId}",
+                    fontSize = 12.sp,
+                    color = Color.Blue
+                )
+            }
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                when (order.status) {
+                    "pending" -> {
+                        Button(
+                            onClick = { onUpdateStatus("pickup") },
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            Text("Listo para Recoger")
+                        }
                     }
-                }
-                if (order.status == "pickup") {
-                    Button(onClick = { onUpdateStatus("delivered") }, colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4CAF50))) {
-                        Text("Marcar Entregado")
+                    "pickup" -> {
+                        Button(
+                            onClick = { onUpdateStatus("delivered") },
+                            modifier = Modifier.weight(1f),
+                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4CAF50))
+                        ) {
+                            Text("Marcar Entregado")
+                        }
+                    }
+                    "in_coming" -> {
+                        Button(
+                            onClick = { onUpdateStatus("arrived") },
+                            modifier = Modifier.weight(1f),
+                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFFF9800))
+                        ) {
+                            Text("Llegó al Local")
+                        }
+                    }
+                    "arrived" -> {
+                        Button(
+                            onClick = { onUpdateStatus("delivered") },
+                            modifier = Modifier.weight(1f),
+                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4CAF50))
+                        ) {
+                            Text("Entregar")
+                        }
                     }
                 }
             }
@@ -145,46 +217,81 @@ fun SellerOrderCard(
 fun StatusBadge(status: String) {
     Surface(
         color = when(status) {
-            "pending" -> Color.LightGray
-            "pickup" -> Color.Yellow
-            "delivered" -> Color.Green
-            else -> Color.Cyan
+            "pending" -> Color(0xFF9E9E9E)
+            "pickup" -> Color(0xFFFFC107)
+            "in_coming" -> Color(0xFF2196F3)
+            "arrived" -> Color(0xFFFF9800)
+            "delivered" -> Color(0xFF4CAF50)
+            else -> Color.Gray
         },
         shape = RoundedCornerShape(4.dp)
     ) {
-        Text(status.uppercase(), modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp), fontSize = 10.sp)
+        Text(
+            text = when(status) {
+                "pending" -> "PENDIENTE"
+                "pickup" -> "LISTO"
+                "in_coming" -> "EN CAMINO"
+                "arrived" -> "LLEGÓ"
+                "delivered" -> "ENTREGADO"
+                else -> status.uppercase()
+            },
+            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+            fontSize = 10.sp,
+            fontWeight = FontWeight.Bold,
+            color = Color.Black
+        )
     }
 }
 
 @Composable
-fun AddOrderDialog(
+fun AddProductDialog(
     onDismiss: () -> Unit,
-    onConfirm: (String, String, Double) -> Unit
+    onConfirm: (String, Double) -> Unit
 ) {
-    var title by remember { mutableStateOf("") }
-    var desc by remember { mutableStateOf("") }
+    var productName by remember { mutableStateOf("") }
     var price by remember { mutableStateOf("") }
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Publicar Nueva Oferta") },
+        title = { Text("Publicar Nuevo Producto") },
         text = {
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                TextField(value = title, onValueChange = { title = it }, label = { Text("Título (ej: Combo Familiar)") })
-                TextField(value = desc, onValueChange = { desc = it }, label = { Text("Descripción") })
-                TextField(value = price, onValueChange = { price = it }, label = { Text("Precio") })
+            Column(
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                OutlinedTextField(
+                    value = productName,
+                    onValueChange = { productName = it },
+                    label = { Text("Nombre del producto") },
+                    placeholder = { Text("Ej: Pizza Margherita") },
+                    modifier = Modifier.fillMaxWidth()
+                )
+                OutlinedTextField(
+                    value = price,
+                    onValueChange = { price = it },
+                    label = { Text("Precio") },
+                    placeholder = { Text("0.00") },
+                    modifier = Modifier.fillMaxWidth(),
+                    leadingIcon = { Text("$") }
+                )
             }
         },
         confirmButton = {
             Button(
-                onClick = { onConfirm(title, desc, price.toDoubleOrNull() ?: 0.0) },
-                enabled = title.isNotBlank() && price.toDoubleOrNull() != null
+                onClick = {
+                    val priceDouble = price.toDoubleOrNull()
+                    if (priceDouble != null) {
+                        onConfirm(productName, priceDouble)
+                    }
+                },
+                enabled = productName.isNotBlank() && price.toDoubleOrNull() != null
             ) {
                 Text("Publicar")
             }
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) { Text("Cancelar") }
+            TextButton(onClick = onDismiss) {
+                Text("Cancelar")
+            }
         }
     )
 }

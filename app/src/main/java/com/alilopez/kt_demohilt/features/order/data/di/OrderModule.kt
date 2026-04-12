@@ -1,8 +1,14 @@
-package com.alipoez.kt_demohilt.features.order.data.di
+package com.alilopez.kt_demohilt.features.order.data.di
 
-import com.alipoez.kt_demohilt.features.order.data.repositories.OrderRepositoryImpl
-import com.alipoez.kt_demohilt.features.order.domain.repositories.OrderRepository
-import com.alipoez.kt_demohilt.features.order.domain.usecase.*
+import com.alilopez.kt_demohilt.features.order.data.repositories.OrderRepositoryImpl
+import com.alilopez.kt_demohilt.features.order.domain.repositories.OrderRepository
+import com.alilopez.kt_demohilt.features.order.domain.usecase.AssignDeliveryUseCase
+import com.alilopez.kt_demohilt.features.order.domain.usecase.CreateOrderUseCase
+import com.alilopez.kt_demohilt.features.order.domain.usecase.DeleteOrderUseCase
+import com.alilopez.kt_demohilt.features.order.domain.usecase.GetAllOrdersUseCase
+import com.alilopez.kt_demohilt.features.order.domain.usecase.GetOrderByIdUseCase
+import com.alilopez.kt_demohilt.features.order.domain.usecase.GetUserOrdersUseCase
+import com.alilopez.kt_demohilt.features.order.domain.usecase.UpdateOrderStatusUseCase
 import dagger.Binds
 import dagger.Module
 import dagger.Provides
@@ -21,7 +27,7 @@ abstract class OrderModule {
     ): OrderRepository
 }
 
-// Separamos los Provides en otro módulo o podemos usar un companion object
+
 @Module
 @InstallIn(SingletonComponent::class)
 object OrderUseCaseModule {
