@@ -83,8 +83,27 @@ class CustomerOrderViewModel @Inject constructor(
         viewModelScope.launch {
             _uiState.update { currentState ->
                 if (currentState is CustomerOrderUIState.Success) {
-                    val updatedOrders = currentState.orders.map { order ->
-                        if (order.id == updatedOrder.id) updatedOrder else order
+                    val isMyOrder = currentState.orders.any { it.id == updatedOrder.id }
+                    
+                    val updatedOrders = if (isMyOrder) {
+                        currentState.orders.map { order ->
+                            if (order.id == updatedOrder.id) updatedOrder else order
+                        }
+                    } else if (updatedOrder.userId == currentCustomerId) {
+                        currentState.orders + updatedOrder
+                    } else {
+                        currentState.orders
+                    }
+
+                    if (updatedOrder.userId == currentCustomerId) {
+                        addNotification(
+                            OrderNotification(
+                                id = UUID.randomUUID().toString(),
+                                orderId = updatedOrder.id,
+                                message = "Su pedido con ID ${updatedOrder.id} ha cambiado a: ${updatedOrder.statusDisplay}",
+                                type = com.alilopez.kt_demohilt.features.order.presentation.status.NotificationType.ORDER_UPDATED
+                            )
+                        )
                     }
 
                     CustomerOrderUIState.Success(

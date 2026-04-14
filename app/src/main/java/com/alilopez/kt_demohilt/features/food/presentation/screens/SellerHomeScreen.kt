@@ -6,6 +6,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -17,7 +18,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.alilopez.kt_demohilt.features.order.domain.entities.Order
+import com.alilopez.kt_demohilt.features.food.domain.entities.Food
 import com.alilopez.kt_demohilt.features.food.presentation.states.SellerHomeUIState
 import com.alilopez.kt_demohilt.features.food.presentation.viewmodels.SellerViewModel
 import java.util.Locale
@@ -59,19 +60,19 @@ fun SellerHomeScreen(
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Text("Órdenes de Clientes", style = MaterialTheme.typography.headlineSmall)
+                        Text("Mis Productos", style = MaterialTheme.typography.headlineSmall)
                         IconButton(onClick = { viewModel.loadData(sellerId) }) {
                             Icon(Icons.Default.Refresh, contentDescription = "Refrescar")
                         }
                     }
 
-                    if (state.orders.isEmpty()) {
+                    if (state.foods.isEmpty()) {
                         Box(
                             modifier = Modifier.weight(1f).fillMaxWidth(),
                             contentAlignment = Alignment.Center
                         ) {
                             Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                Text("No tienes órdenes aún")
+                                Text("Aún no tienes productos")
                                 Text(
                                     text = "Los clientes verán tus productos en el Marketplace",
                                     fontSize = 14.sp,
@@ -85,11 +86,11 @@ fun SellerHomeScreen(
                             contentPadding = PaddingValues(16.dp),
                             verticalArrangement = Arrangement.spacedBy(12.dp)
                         ) {
-                            items(state.orders) { order ->
-                                SellerOrderCard(
-                                    order = order,
-                                    onUpdateStatus = { status ->
-                                        viewModel.updateStatus(order.id, status)
+                            items(state.foods) { food ->
+                                SellerFoodCard(
+                                    food = food,
+                                    onDelete = {
+                                        viewModel.deleteProduct(food.id)
                                     }
                                 )
                             }
@@ -119,129 +120,40 @@ fun SellerHomeScreen(
 }
 
 @Composable
-fun SellerOrderCard(
-    order: Order,
-    onUpdateStatus: (String) -> Unit
+fun SellerFoodCard(
+    food: Food,
+    onDelete: () -> Unit
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
+        Row(
+            modifier = Modifier.padding(16.dp).fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Column {
                 Text(
-                    text = order.title,
+                    text = food.name,
                     fontWeight = FontWeight.Bold,
                     fontSize = 18.sp
                 )
-                StatusBadge(order.status)
-            }
 
-            Spacer(modifier = Modifier.height(4.dp))
+                Spacer(modifier = Modifier.height(8.dp))
 
-            Text(
-                text = order.description,
-                color = Color.Gray,
-                fontSize = 14.sp
-            )
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-            val formattedPrice = String.format(Locale.getDefault(), "%.2f", order.price)
-            Text(
-                text = "$$formattedPrice",
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.primary,
-                fontSize = 16.sp
-            )
-
-            if (order.userId != 0) {
-                Spacer(modifier = Modifier.height(4.dp))
+                val formattedPrice = String.format(Locale.getDefault(), "%.2f", food.price)
                 Text(
-                    text = "Cliente ID: ${order.userId}",
-                    fontSize = 12.sp,
-                    color = Color.Blue
+                    text = "$$formattedPrice",
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.primary,
+                    fontSize = 16.sp
                 )
             }
-
-            Spacer(modifier = Modifier.height(12.dp))
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                when (order.status) {
-                    "pending" -> {
-                        Button(
-                            onClick = { onUpdateStatus("pickup") },
-                            modifier = Modifier.weight(1f)
-                        ) {
-                            Text("Listo para Recoger")
-                        }
-                    }
-                    "pickup" -> {
-                        Button(
-                            onClick = { onUpdateStatus("delivered") },
-                            modifier = Modifier.weight(1f),
-                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4CAF50))
-                        ) {
-                            Text("Marcar Entregado")
-                        }
-                    }
-                    "in_coming" -> {
-                        Button(
-                            onClick = { onUpdateStatus("arrived") },
-                            modifier = Modifier.weight(1f),
-                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFFF9800))
-                        ) {
-                            Text("Llegó al Local")
-                        }
-                    }
-                    "arrived" -> {
-                        Button(
-                            onClick = { onUpdateStatus("delivered") },
-                            modifier = Modifier.weight(1f),
-                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF4CAF50))
-                        ) {
-                            Text("Entregar")
-                        }
-                    }
-                }
+            IconButton(onClick = onDelete) {
+                Icon(Icons.Default.Delete, contentDescription = "Eliminar Producto", tint = Color.Red)
             }
         }
-    }
-}
-
-@Composable
-fun StatusBadge(status: String) {
-    Surface(
-        color = when(status) {
-            "pending" -> Color(0xFF9E9E9E)
-            "pickup" -> Color(0xFFFFC107)
-            "in_coming" -> Color(0xFF2196F3)
-            "arrived" -> Color(0xFFFF9800)
-            "delivered" -> Color(0xFF4CAF50)
-            else -> Color.Gray
-        },
-        shape = RoundedCornerShape(4.dp)
-    ) {
-        Text(
-            text = when(status) {
-                "pending" -> "PENDIENTE"
-                "pickup" -> "LISTO"
-                "in_coming" -> "EN CAMINO"
-                "arrived" -> "LLEGÓ"
-                "delivered" -> "ENTREGADO"
-                else -> status.uppercase()
-            },
-            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
-            fontSize = 10.sp,
-            fontWeight = FontWeight.Bold,
-            color = Color.Black
-        )
     }
 }
 
