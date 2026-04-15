@@ -117,7 +117,10 @@ fun AppNavGraph(
         // Pantalla de pedidos del cliente
         composable(route = Screen.MyOrders.route) {
             userId?.let { id ->
-                CustomerOrderScreen(customerId = id)
+                CustomerOrderScreen(
+                    customerId = id,
+                    onBack = { navController.popBackStack() }
+                )
             }
         }
 

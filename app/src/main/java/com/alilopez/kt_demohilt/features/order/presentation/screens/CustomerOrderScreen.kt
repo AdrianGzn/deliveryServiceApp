@@ -3,6 +3,8 @@ package com.alilopez.kt_demohilt.features.order.presentation.screens
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -17,6 +19,7 @@ import com.alilopez.kt_demohilt.features.order.presentation.viewmodels.CustomerO
 @Composable
 fun CustomerOrderScreen(
     customerId: Int,
+    onBack: () -> Unit,
     viewModel: CustomerOrderViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -28,7 +31,15 @@ fun CustomerOrderScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Mis Pedidos") }
+                title = { Text("Mis Pedidos") },
+                navigationIcon = {
+                    IconButton(onClick = onBack) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = "Regresar"
+                        )
+                    }
+                }
             )
         }
     ) { paddingValues ->
