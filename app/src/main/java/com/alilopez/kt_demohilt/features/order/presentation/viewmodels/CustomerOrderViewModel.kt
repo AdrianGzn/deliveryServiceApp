@@ -100,7 +100,7 @@ class CustomerOrderViewModel @Inject constructor(
                             OrderNotification(
                                 id = UUID.randomUUID().toString(),
                                 orderId = updatedOrder.id,
-                                message = "Su pedido con ID ${updatedOrder.id} ha cambiado a: ${updatedOrder.statusDisplay}",
+                                message = "Su pedido \"${updatedOrder.title}\" ha cambiado a: ${updatedOrder.statusDisplay}",
                                 type = com.alilopez.kt_demohilt.features.order.presentation.status.NotificationType.ORDER_UPDATED
                             )
                         )
