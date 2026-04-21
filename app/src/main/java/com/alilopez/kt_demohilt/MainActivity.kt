@@ -1,5 +1,6 @@
 package com.alilopez.kt_demohilt
 
+import android.app.Activity
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -8,10 +9,12 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
@@ -36,6 +39,24 @@ class MainActivity : ComponentActivity() {
                 val navBackStackEntry by navController.currentBackStackEntryAsState()
                 val currentRoute = navBackStackEntry?.destination?.route
 
+                // Manejo de navegación desde Notificación
+                val context = LocalContext.current
+                val intent = (context as? Activity)?.intent
+                
+                LaunchedEffect(intent, isUserLoggedIn) {
+                    if (isUserLoggedIn) {
+                        val screenToOpen = intent?.getStringExtra("SCREEN_TO_OPEN")
+                        if (screenToOpen == "CUSTOMER_ORDERS") {
+                            // Limpiar el extra para que no re-navegue al rotar pantalla
+                            intent.removeExtra("SCREEN_TO_OPEN")
+                            navController.navigate(Screen.MyOrders.route) {
+                                // Evitar múltiples copias en el backstack
+                                launchSingleTop = true
+                            }
+                        }
+                    }
+                }
+
                 val isAuthScreen = currentRoute == Screen.Login.route ||
                         currentRoute == Screen.Register.route
 
@@ -46,6 +67,7 @@ class MainActivity : ComponentActivity() {
                         Screen.CustomerHome.route -> "Marketplace"
                         Screen.DeliveryHome.route -> "Panel Repartidor"
                         Screen.SellerHome.route -> "Mi Tienda"
+                        Screen.MyOrders.route -> "Mis Pedidos"
                         else -> "Delivery App"
                     }
                 }

@@ -1,5 +1,6 @@
 package com.alilopez.kt_demohilt.features.order.presentation.screens
 
+import android.media.RingtoneManager
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -13,6 +14,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -28,6 +30,24 @@ fun CustomerOrderScreen(
     viewModel: CustomerOrderViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    val context = LocalContext.current
+
+    // Lógica para el sonido de notificación
+    val notifications = (uiState as? CustomerOrderUIState.Success)?.notifications ?: emptyList()
+    var lastNotificationCount by remember { mutableIntStateOf(0) }
+
+    LaunchedEffect(notifications.size) {
+        if (notifications.size > lastNotificationCount) {
+            try {
+                val notificationUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION)
+                val ringtone = RingtoneManager.getRingtone(context, notificationUri)
+                ringtone.play()
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+        }
+        lastNotificationCount = notifications.size
+    }
 
     LaunchedEffect(customerId) {
         viewModel.loadOrders(customerId)

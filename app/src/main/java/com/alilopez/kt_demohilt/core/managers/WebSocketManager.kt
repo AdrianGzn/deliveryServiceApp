@@ -1,9 +1,16 @@
 package com.alilopez.kt_demohilt.core.managers
 
+import android.app.NotificationManager
+import android.app.PendingIntent
+import android.content.Context
+import android.content.Intent
 import android.util.Log
+import androidx.core.app.NotificationCompat
 import com.alilopez.kt_demohilt.BuildConfig
+import com.alilopez.kt_demohilt.MainActivity
 import com.alilopez.kt_demohilt.features.order.domain.entities.Order
 import com.google.gson.Gson
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
@@ -15,7 +22,8 @@ import javax.inject.Singleton
 @Singleton
 class WebSocketManager @Inject constructor(
     private val client: OkHttpClient,
-    private val gson: Gson
+    private val gson: Gson,
+    @ApplicationContext private val context: Context
 ) {
     private val _orderUpdates = MutableSharedFlow<Order>()
     val orderUpdates = _orderUpdates.asSharedFlow()
@@ -52,7 +60,10 @@ class WebSocketManager @Inject constructor(
                         "order_update" -> {
                             data?.let {
                                 val order = gson.fromJson(it.toString(), Order::class.java)
-                                scope.launch { _orderUpdates.emit(order) }
+                                scope.launch { 
+                                    _orderUpdates.emit(order)
+                                    showNotification(order)
+                                }
                             }
                         }
                         "connected" -> {
@@ -84,6 +95,30 @@ class WebSocketManager @Inject constructor(
                 Log.d("WebSocketManager", "WS Closed: $reason")
             }
         })
+    }
+
+    private fun showNotification(order: Order) {
+        val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        
+        val intent = Intent(context, MainActivity::class.java).apply {
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+        }
+        
+        val pendingIntent = PendingIntent.getActivity(
+            context, 0, intent,
+            PendingIntent.FLAG_IMMUTABLE
+        )
+
+        val notification = NotificationCompat.Builder(context, "orders_channel")
+            .setSmallIcon(android.R.drawable.ic_dialog_info) // Usando ícono del sistema por defecto
+            .setContentTitle("Actualización de Pedido")
+            .setContentText("Tu pedido \"${order.title}\" ahora está: ${order.statusDisplay}")
+            .setPriority(NotificationCompat.PRIORITY_HIGH)
+            .setAutoCancel(true)
+            .setContentIntent(pendingIntent)
+            .build()
+
+        notificationManager.notify(order.id, notification)
     }
 
     fun disconnect() {
